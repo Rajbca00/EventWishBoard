@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img">
+<style>
+
+  @keyframes bob   { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+  @keyframes rise  { 0% { transform: translateY(10px); opacity: .55 } 50% { opacity: 1 } 100% { transform: translateY(-16px); opacity: .2 } }
+  @keyframes tw    { 0%,100% { opacity: .55; transform: scale(.9) } 50% { opacity: 1; transform: scale(1.15) } }
+  @keyframes sway  { 0%,100% { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } }
+  @keyframes drift { 0% { transform: translateY(-6px) rotate(-8deg) } 100% { transform: translateY(10px) rotate(8deg) } }
+  @keyframes pop   { 0%,100% { transform: scale(1) } 45% { transform: scale(1.1) } }
+
+  .bob   { animation: bob 3.2s ease-in-out infinite; transform-origin: center }
+  .rise  { animation: rise 2.8s ease-in-out infinite; transform-origin: center }
+  .tw    { animation: tw 2.1s ease-in-out infinite; transform-origin: center }
+  .sway  { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 90% }
+  .drift { animation: drift 3.4s ease-in-out infinite alternate; transform-origin: center }
+  .pop   { animation: pop 2.4s ease-in-out infinite; transform-origin: center }
+
+  /* Motion is decoration; the composition above already reads without it. */
+  @media (prefers-reduced-motion: reduce) {
+    .bob, .rise, .tw, .sway, .drift, .pop { animation: none }
+  }
+</style>
+
+  <g class="pop">
+    <rect x="24" y="58" width="72" height="36" rx="8" fill="#efd9c2"/>
+    <path d="M24 66h72v9H24z" fill="#e6b9cb"/>
+    <rect x="28" y="40" width="64" height="21" rx="7" fill="#f5adc2"/>
+    <rect x="56" y="22" width="7" height="19" rx="3.5" fill="#fff3e2"/>
+    <ellipse cx="59.5" cy="19" rx="5" ry="7" fill="#f0a848"/>
+  </g>
+  <g class="rise" style="animation-delay:.3s"><path transform="translate(80 36) scale(0.53125)" opacity="0.9" d="M16 29S1.5 20.4 1.5 10.8C1.5 5.4 5.6 1.5 10.4 1.5c3 0 5 1.6 5.6 3.4C16.6 3.1 18.6 1.5 21.6 1.5c4.8 0 8.9 3.9 8.9 9.3C30.5 20.4 16 29 16 29Z" fill="#e5789c"/></g>
+  <g class="rise" style="animation-delay:1.4s"><path transform="translate(24 38) scale(0.4375)" opacity="0.9" d="M16 29S1.5 20.4 1.5 10.8C1.5 5.4 5.6 1.5 10.4 1.5c3 0 5 1.6 5.6 3.4C16.6 3.1 18.6 1.5 21.6 1.5c4.8 0 8.9 3.9 8.9 9.3C30.5 20.4 16 29 16 29Z" fill="#f2a5bd"/></g>
+</svg>

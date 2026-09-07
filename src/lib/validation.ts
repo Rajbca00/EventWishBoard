@@ -1,0 +1,88 @@
+import { z } from 'zod';
+import { LIMITS } from './env';
+
+const dataUrl = z
+  .string()
+  .regex(
+    /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=\s]+$/i,
+    'Image must be a PNG, JPEG, WebP or GIF data URL',
+  );
+
+/** What a guest submits from the wish composer. */
+export const wishSubmissionSchema = z.object({
+  message: z.string().trim().min(1, 'Write a little something first').max(LIMITS.wishChars),
+  guestName: z.string().trim().max(LIMITS.nameChars).optional().default(''),
+  isAnonymous: z.boolean().optional().default(false),
+  sticker: z.string().max(400).nullable().optional(),
+  gif: z.string().max(400).nullable().optional(),
+  meme: z.string().max(400).nullable().optional(),
+  selfie: dataUrl.nullable().optional(),
+});
+
+export type WishSubmission = z.infer<typeof wishSubmissionSchema>;
+
+export const eventSettingsSchema = z.object({
+  selfieEnabled: z.boolean(),
+  wallEnabled: z.boolean(),
+  publicSelfies: z.boolean(),
+  moderation: z.enum(['auto', 'manual']),
+  charLimit: z.number().int().min(50).max(LIMITS.wishChars),
+  maxWishes: z.number().int().min(0).max(100_000),
+  useDefaultAssets: z.boolean(),
+  showInstagram: z.boolean(),
+  showReview: z.boolean(),
+});
+
+export const createEventSchema = z.object({
+  name: z.string().trim().min(1, 'Give the event a name').max(120),
+  hosts: z.string().trim().max(120).optional().default(''),
+  slug: z.string().trim().max(60).optional(),
+  eventDate: z.string().trim().max(40).nullable().optional(),
+  expiryDate: z.string().trim().max(40).nullable().optional(),
+  description: z.string().trim().max(600).optional().default(''),
+  theme: z.enum(['wedding', 'birthday', 'engagement', 'celebration']).optional().default('wedding'),
+  welcomeMessage: z.string().trim().max(300).optional().default(''),
+  logoUrl: z.string().max(500).nullable().optional(),
+  background: z.string().max(500).nullable().optional(),
+  settings: eventSettingsSchema.partial().optional(),
+});
+
+export const updateEventSchema = createEventSchema.partial().extend({
+  archived: z.boolean().optional(),
+});
+
+export const preloadedWishSchema = z.object({
+  message: z.string().trim().min(1).max(LIMITS.wishChars),
+  guestName: z.string().trim().max(LIMITS.nameChars).optional().default(''),
+  isAnonymous: z.boolean().optional().default(true),
+  sticker: z.string().max(400).nullable().optional(),
+});
+
+export const assetUploadSchema = z
+  .object({
+    type: z.enum(['sticker', 'gif', 'meme']),
+    name: z.string().trim().max(80).optional().default(''),
+    emoji: z.string().trim().max(16).nullable().optional(),
+    file: dataUrl.nullable().optional(),
+    sortOrder: z.number().int().min(0).max(9999).optional().default(0),
+  })
+  .refine((value) => Boolean(value.emoji || value.file), {
+    message: 'Upload an image or choose an emoji',
+  });
+
+export const assetPatchSchema = z.object({
+  enabled: z.boolean().optional(),
+  name: z.string().trim().max(80).optional(),
+  sortOrder: z.number().int().min(0).max(9999).optional(),
+});
+
+export const wishPatchSchema = z.object({
+  status: z.enum(['pending', 'approved', 'hidden']).optional(),
+  featured: z.boolean().optional(),
+  message: z.string().trim().min(1).max(LIMITS.wishChars).optional(),
+});
+
+/** Turns a ZodError into a single readable sentence for the guest UI. */
+export function firstIssue(error: z.ZodError): string {
+  return error.issues[0]?.message ?? 'Something in that submission looked off';
+}

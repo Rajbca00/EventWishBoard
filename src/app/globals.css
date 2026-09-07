@@ -1,0 +1,283 @@
+@import 'tailwindcss';
+
+/* =============================================================================
+   Laya & Bee Wish Wall — design tokens
+   Guest surfaces are driven by per-event theme variables injected at runtime
+   (see src/lib/themes.ts); the values below are the wedding-theme fallbacks.
+   ========================================================================== */
+
+@theme {
+  --font-display: var(--font-playfair), 'Georgia', serif;
+  --font-body: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --color-cocoa-50: #faf6f4;
+  --color-cocoa-100: #f2e7e1;
+  --color-cocoa-200: #e4cec3;
+  --color-cocoa-300: #cfae9e;
+  --color-cocoa-400: #b08872;
+  --color-cocoa-500: #916a55;
+  --color-cocoa-600: #745343;
+  --color-cocoa-700: #5c4237;
+  --color-cocoa-800: #43312a;
+  --color-cocoa-900: #2e221e;
+
+  --color-blush-50: #fff5f7;
+  --color-blush-100: #ffe6ec;
+  --color-blush-200: #ffcdd9;
+  --color-blush-300: #f8a8bd;
+  --color-blush-400: #ec7f9e;
+  --color-blush-500: #d95f83;
+  --color-blush-600: #bc4468;
+
+  --color-gold-300: #ecd39a;
+  --color-gold-400: #dcb463;
+  --color-gold-500: #c79a45;
+
+  --radius-card: 1.5rem;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 18px 40px -24px rgb(74 44 51 / 0.45);
+  --shadow-lift: 0 30px 60px -30px rgb(74 44 51 / 0.55);
+  --shadow-float: 0 24px 50px -28px rgb(74 44 51 / 0.5);
+}
+
+:root {
+  /* Overwritten per event by ThemeProvider; these keep non-event pages sane. */
+  --bg-1: #fff7f3;
+  --bg-2: #ffe9ef;
+  --bg-3: #f4e7ff;
+  --ink: #4a2c33;
+  --ink-soft: #8d6d75;
+  --accent: #d4738f;
+  --accent-2: #b8577a;
+  --accent-soft: #ffd9e4;
+  --gold: #d8a657;
+  --card: rgb(255 255 255 / 0.74);
+  --card-line: rgb(212 115 143 / 0.22);
+  --wall-1: #fce3ec;
+  --wall-2: #e8dcff;
+  --wall-3: #fff2e4;
+
+  color-scheme: light;
+}
+
+/* The dashboard is a working tool, not a celebration: it swaps the per-event
+   festive palette for a calm, neutral cocoa one. */
+.admin-shell {
+  --ink: #3b2c27;
+  --ink-soft: #7a675f;
+  --accent: #b8577a;
+  --accent-2: #93425f;
+  --accent-soft: #f7dde5;
+  --gold: #c79a45;
+  --card: #ffffff;
+  --card-line: rgb(90 66 55 / 0.14);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--bg-1);
+  /* Keeps the composer usable when a mobile keyboard is open. */
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Large touch targets everywhere in the guest flow. */
+button,
+[role='button'] {
+  touch-action: manipulation;
+}
+
+/* --------------------------------------------------------------- utilities */
+
+/* `font-display` and `font-body` are generated from the --font-* theme keys. */
+
+@utility glass {
+  background: var(--card);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid var(--card-line);
+}
+
+@utility text-balance-pretty {
+  text-wrap: pretty;
+}
+
+/* Hide scrollbars on the sticker / GIF carousels without losing scrollability. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility scene-3d {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+/* --------------------------------------------------------------- animations */
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -14px, 0);
+  }
+}
+
+@keyframes drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(10px, -18px, 0) rotate(4deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(var(--drift-x, 20px), 110vh, 0) rotate(320deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Entrance reveal. Deliberately CSS rather than JS: if scripting is slow or
+   motion is reduced, the content must still end up visible. */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.reveal {
+  animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-float {
+  animation: float-y 6s ease-in-out infinite;
+}
+.animate-drift {
+  animation: drift 9s ease-in-out infinite;
+}
+.animate-twinkle {
+  animation: twinkle 3.2s ease-in-out infinite;
+}
+.animate-fall {
+  animation: fall linear infinite;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--ink) 20%,
+    var(--gold) 42%,
+    var(--accent) 55%,
+    var(--ink) 78%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+/* --------------------------------------------------------------- a11y */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    /* Delays matter as much as durations: without this, a staggered reveal
+       still makes a reduced-motion guest wait for content that never moves. */
+    animation-delay: 0ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Devices that flagged themselves as low powered drop the heavy layers. */
+.low-power .decor-layer--heavy {
+  display: none;
+}
+.low-power .glass {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgb(255 255 255 / 0.9);
+}
+
+/* --------------------------------------------------------------- focus */
+
+:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 3px;
+  border-radius: 6px;
+}

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img">
+<style>
+
+  @keyframes bob   { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+  @keyframes rise  { 0% { transform: translateY(10px); opacity: .55 } 50% { opacity: 1 } 100% { transform: translateY(-16px); opacity: .2 } }
+  @keyframes tw    { 0%,100% { opacity: .55; transform: scale(.9) } 50% { opacity: 1; transform: scale(1.15) } }
+  @keyframes sway  { 0%,100% { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } }
+  @keyframes drift { 0% { transform: translateY(-6px) rotate(-8deg) } 100% { transform: translateY(10px) rotate(8deg) } }
+  @keyframes pop   { 0%,100% { transform: scale(1) } 45% { transform: scale(1.1) } }
+
+  .bob   { animation: bob 3.2s ease-in-out infinite; transform-origin: center }
+  .rise  { animation: rise 2.8s ease-in-out infinite; transform-origin: center }
+  .tw    { animation: tw 2.1s ease-in-out infinite; transform-origin: center }
+  .sway  { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 90% }
+  .drift { animation: drift 3.4s ease-in-out infinite alternate; transform-origin: center }
+  .pop   { animation: pop 2.4s ease-in-out infinite; transform-origin: center }
+
+  /* Motion is decoration; the composition above already reads without it. */
+  @media (prefers-reduced-motion: reduce) {
+    .bob, .rise, .tw, .sway, .drift, .pop { animation: none }
+  }
+</style>
+
+  <g class="sway">
+    <path d="M30 28h26l-9 26v22h9v6H21v-6h9V54l-9-26Z" fill="#f4e3c0"/>
+    <path d="M32 32h22l-5 15H37l-5-15Z" fill="#e8a8bf"/>
+  </g>
+  <g class="sway" style="animation-delay:.6s">
+    <path d="M64 28h26l-9 26v22h9v6H55v-6h9V54l-9-26Z" fill="#f8ecd6"/>
+    <path d="M66 32h22l-5 15H71l-5-15Z" fill="#f2bcce"/>
+  </g>
+  <g class="tw"><path transform="translate(50 4) scale(0.75)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#dcb463"/></g>
+  <g class="tw" style="animation-delay:.7s"><path transform="translate(86 12) scale(0.5416666666666666)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#e8cb8e"/></g>
+</svg>
