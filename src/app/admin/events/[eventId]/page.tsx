@@ -45,6 +45,9 @@ export default async function EventOverviewPage({ params }: PageProps) {
             <Badge tone={status}>
               {status === 'open' ? 'Live' : status === 'full' ? 'Full' : 'Closed'}
             </Badge>
+            <LinkButton href={`/event/${event.id}/live`} variant="ghost" external>
+              Live wall
+            </LinkButton>
             <LinkButton href={`/event/${event.id}`} variant="ghost" external>
               Preview guest page
             </LinkButton>
@@ -132,6 +135,21 @@ export default async function EventOverviewPage({ params }: PageProps) {
         </div>
 
         <div className="space-y-5">
+          <Panel
+            title="Live wall"
+            description="Open this on a TV or projector at the venue"
+          >
+            <div className="p-5">
+              <p className="mb-3 break-all rounded-xl border border-[var(--card-line)] bg-cocoa-50 px-3.5 py-2.5 font-mono text-[0.76rem] text-[var(--ink)]">
+                {`${url}/live`}
+              </p>
+              <p className="text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
+                Wishes drift continuously and the board checks for new ones every 30
+                seconds. Add <code>?refresh=15</code> to check more often.
+              </p>
+            </div>
+          </Panel>
+
           <Panel title="QR code" description="Print this for the dessert table">
             <QrPanel eventId={event.id} url={url} hosts={event.hosts || event.name} />
           </Panel>
