@@ -77,7 +77,8 @@ export function siteUrl(): string {
 
 export const BRAND = {
   name: 'Laya & Bee',
-  tagline: 'Beautiful desserts and experiences made for celebrations.',
+  tagline: 'Homemade treats for happier moments.',
+  promise: 'Good treats, brighter people.',
   instagram: 'https://www.instagram.com/layanbee_cakes/',
   review: 'https://www.google.com/search?q=laya+and+bee',
   enquiry: 'https://www.instagram.com/layanbee_cakes/',

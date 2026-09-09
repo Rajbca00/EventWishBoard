@@ -61,17 +61,41 @@
   color-scheme: light;
 }
 
+/* Laya & Bee house colours, taken from the bakery's own artwork: chocolate on
+   cream, with gold for the ampersand and small accents. Per-event themes still
+   drive the guest celebration; these are the constants around it. */
+:root {
+  --brand-cream: #f7edda;
+  --brand-cream-deep: #efe0c6;
+  --brand-cocoa: #38200e;
+  --brand-cocoa-soft: #6b4a33;
+  --brand-gold: #d9a441;
+  --brand-gold-soft: #f0d9a4;
+}
+
 /* The dashboard is a working tool, not a celebration: it swaps the per-event
-   festive palette for a calm, neutral cocoa one. */
+   festive palette for the house cream-and-chocolate one. */
 .admin-shell {
-  --ink: #3b2c27;
-  --ink-soft: #7a675f;
+  --ink: #38200e;
+  --ink-soft: #7a6350;
   --accent: #b8577a;
   --accent-2: #93425f;
   --accent-soft: #f7dde5;
-  --gold: #c79a45;
+  --gold: var(--brand-gold);
   --card: #ffffff;
-  --card-line: rgb(90 66 55 / 0.14);
+  --card-line: rgb(56 32 14 / 0.14);
+}
+
+/* The chocolate drip from the packaging, as a reusable banner edge. Drawn as an
+   SVG mask so it scales to any width without repeating visibly. */
+.choc-drip {
+  background: linear-gradient(180deg, var(--brand-cocoa), #2a1809);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24' preserveAspectRatio='none'%3E%3Cpath d='M0 0h120v10c-4 0-5 4-8 4s-4-2-7-2-4 6-8 6-5-7-9-7-4 3-7 3-4-4-8-4-5 5-9 5-4-6-8-6-4 3-7 3-5-3-9-3-4 4-8 4-5-5-9-5-4 3-8 3-4-4-7-4V0Z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24' preserveAspectRatio='none'%3E%3Cpath d='M0 0h120v10c-4 0-5 4-8 4s-4-2-7-2-4 6-8 6-5-7-9-7-4 3-7 3-4-4-8-4-5 5-9 5-4-6-8-6-4 3-7 3-5-3-9-3-4 4-8 4-5-5-9-5-4 3-8 3-4-4-7-4V0Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 * {

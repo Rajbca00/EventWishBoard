@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
-import { BrandGlyph } from '@/components/ui/BrandMark';
+import { BrandGlyph, BrandWordmark } from '@/components/ui/BrandMark';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -75,9 +75,9 @@ export default function Sidebar({ eventId, eventName, adminEmail }: Props) {
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-6 bg-cocoa-900 p-5 text-cocoa-100 lg:h-dvh lg:w-64 lg:sticky lg:top-0">
-      <Link href="/admin" className="flex items-center gap-2.5">
-        <BrandGlyph size={26} className="text-blush-300" />
-        <span className="font-display text-lg tracking-wide text-white">Laya &amp; Bee</span>
+      <Link href="/admin" className="flex items-center gap-3">
+        <BrandGlyph size={30} className="text-[var(--brand-gold-soft)]" />
+        <BrandWordmark size="sm" className="items-start text-white [&_span:last-child]:text-cocoa-300" />
       </Link>
 
       <nav className="flex flex-col gap-1">

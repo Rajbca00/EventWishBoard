@@ -116,13 +116,17 @@ export default function LiveWall({
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  /**
-   * Deal the wishes into columns, then repeat each column so the marquee can
-   * loop by translating exactly half its height. Short walls are padded by
-   * repeating, so a board with three wishes still fills a projector.
+  /*
+   * Early in an evening there are only a handful of wishes, and padding them
+   * out to fill a projector just prints the same message six times — it reads
+   * as a bug, and it makes two real wishes look like filler. Below the point
+   * where the columns can be filled honestly, the board switches to a showcase:
+   * every wish shown once, larger, drifting gently.
    */
+  const scrolling = wishes.length >= columns * 3;
+
   const lanes = useMemo(() => {
-    if (!wishes.length) return [];
+    if (!wishes.length || !scrolling) return [];
 
     const perColumn: PublicWish[][] = Array.from({ length: columns }, () => []);
     wishes.forEach((wish, index) => perColumn[index % columns]!.push(wish));
@@ -131,28 +135,40 @@ export default function LiveWall({
       const filled = lane.length ? lane : wishes;
 
       /*
-       * Build the ribbon in two steps. First pad it out so even a single wish
-       * fills a tall column, then emit that block exactly twice.
-       *
-       * The doubling is what makes the loop seamless: the animation translates
-       * the track by -50%, which lands precisely on the start of the second
-       * copy. Repeating an odd number of times instead would stop halfway
-       * through a block and visibly jump on every cycle.
+       * The track is the column's wishes emitted exactly twice. That doubling
+       * is what makes the loop seamless: the animation translates by -50%,
+       * landing precisely on the start of the second copy. An odd number of
+       * repeats would stop mid-block and visibly jump every cycle.
        */
-      const block = Array.from({ length: Math.max(1, Math.ceil(4 / filled.length)) }, () => filled).flat();
-      const items = [...block, ...block];
+      const items = [...filled, ...filled];
 
       const random = seededRandom(`lane:${eventId}:${index}`);
       return {
         key: index,
         items,
-        // Duration scales with the block so every column drifts at a similar pace.
-        duration: COLUMN_SPEEDS[index % COLUMN_SPEEDS.length]! * (block.length / 4),
+        // Longer columns take proportionally longer, so every lane drifts at
+        // roughly the same speed regardless of how much it holds.
+        duration: COLUMN_SPEEDS[index % COLUMN_SPEEDS.length]! * (filled.length / 4),
         delay: -random() * 40,
         reverse: index % 2 === 1,
       };
     });
-  }, [wishes, columns, eventId]);
+  }, [wishes, columns, eventId, scrolling]);
+
+  /** Showcase layout: each wish once, gently floating on its own rhythm. */
+  const showcase = useMemo(() => {
+    if (!wishes.length || scrolling) return [];
+    return wishes.map((wish, index) => {
+      const random = seededRandom(`showcase:${eventId}:${wish.id}`);
+      return {
+        wish,
+        delay: random() * 4,
+        duration: 7 + random() * 5,
+        tilt: (random() - 0.5) * 4,
+        key: `${wish.id}-${index}`,
+      };
+    });
+  }, [wishes, eventId, scrolling]);
 
   return (
     <div className="relative isolate h-dvh w-screen overflow-hidden bg-[var(--bg-1)]">
@@ -187,14 +203,40 @@ export default function LiveWall({
 
       {/* ------------------------------------------------------------ the board */}
       <div
-        className="absolute inset-0 z-10 grid gap-[1.6vw] px-[3vw]"
+        className={`absolute inset-0 z-10 px-[3vw] ${
+          scrolling ? 'grid gap-[1.6vw]' : 'flex flex-wrap content-center items-center justify-center gap-[2vw]'
+        }`}
         style={{
-          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gridTemplateColumns: scrolling ? `repeat(${columns}, minmax(0, 1fr))` : undefined,
           // Leave room for the header and footer bands.
           paddingTop: '18vh',
           paddingBottom: '10vh',
         }}
       >
+        {/* A handful of wishes: show each one once, larger, drifting. */}
+        {showcase.map((entry) => (
+          <div
+            key={entry.key}
+            className={reducedMotion ? undefined : 'animate-float'}
+            style={{
+              animationDelay: `${entry.delay}s`,
+              animationDuration: `${entry.duration}s`,
+              transform: `rotate(${entry.tilt}deg)`,
+              // The fewer there are, the more room each one gets — two wishes
+              // should feel like a centrepiece, not two lost cards.
+              width: `min(${Math.max(20, 38 - showcase.length * 3)}vw, ${
+                100 / Math.min(showcase.length, 3) - 4
+              }%)`,
+            }}
+          >
+            <WishCard
+              wish={entry.wish}
+              variant="live"
+              className={arrivals.some((a) => a.id === entry.wish.id) ? 'just-arrived' : undefined}
+            />
+          </div>
+        ))}
+
         {lanes.map((lane) => (
           <div key={lane.key} className="relative overflow-hidden">
             <div
@@ -220,7 +262,7 @@ export default function LiveWall({
           </div>
         ))}
 
-        {lanes.length === 0 && (
+        {wishes.length === 0 && (
           <div className="col-span-full flex items-center justify-center">
             <p className="font-display text-[2vw] text-[var(--ink-soft)]">
               The first wish will appear here ✨
