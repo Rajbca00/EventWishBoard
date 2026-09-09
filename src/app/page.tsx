@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import SceneBackground from '@/components/wall/SceneBackground';
-import BrandMark, { BrandGlyph } from '@/components/ui/BrandMark';
+import { BrandGlyph, BrandWordmark } from '@/components/ui/BrandMark';
 import { resolveTheme, themeStyle } from '@/lib/themes';
 import DemoBanner from '@/components/DemoBanner';
 import { listEvents } from '@/lib/data/events';
@@ -29,8 +29,11 @@ export default async function HomePage() {
     <div style={themeStyle(theme)} className="relative isolate min-h-[100dvh] overflow-hidden">
       <SceneBackground theme={theme} intensity="full" seed="landing" />
 
+      {/* The chocolate drip from the packaging, along the top edge */}
+      <div className="choc-drip pointer-events-none absolute inset-x-0 top-0 z-20 h-[4.5rem] sm:h-24" aria-hidden />
+
       <main className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-5xl flex-col items-center justify-center px-6 py-20 text-center">
-        <BrandMark tone="full" size="lg" />
+        <BrandWordmark size="lg" />
 
         <h1 className="mt-8 font-display text-[2.8rem] leading-[1.05] tracking-tight text-[var(--ink)] sm:text-6xl">
           Wish Wall
@@ -42,6 +45,9 @@ export default async function HomePage() {
         <p className="mt-6 max-w-lg text-balance-pretty text-[1rem] leading-relaxed text-[var(--ink-soft)]">
           A beautiful, interactive wish collection experience for weddings, birthdays and special
           events. Delight your guests, collect their wishes, and create lasting memories.
+        </p>
+        <p className="mt-3 text-[0.72rem] uppercase tracking-[0.3em] text-[var(--ink-soft)]/70">
+          Good treats · Brighter people
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
