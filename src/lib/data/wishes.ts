@@ -4,7 +4,7 @@ import { demoData, demoNewId } from '../demo/store';
 import { deleteSelfie, signSelfies, uploadSelfie } from '../images';
 import { looksLikeSpam, sanitizeText } from '../utils';
 import { isSupabaseConfigured, LIMITS } from '../env';
-import { shapeAdminWish, shapePublicWish } from './shape';
+import { isMissingColumn, shapeAdminWish, shapePublicWish } from './shape';
 import { getEventStats, statusFor } from './events';
 import type {
   AdminWish,
@@ -179,27 +179,45 @@ export async function submitGuestWish(
     selfiePath = await uploadSelfie(event.id, submission.selfie!);
   }
 
-  const { data, error } = await supabaseAdmin()
-    .from('wishes')
-    .insert({
-      event_id: event.id,
-      message,
-      guest_name: guestName,
-      is_anonymous: isAnonymous,
-      sticker: submission.sticker ?? null,
-      gif: submission.gif ?? null,
-      meme: submission.meme ?? null,
-      selfie_path: selfiePath,
-      selfie_public: selfiePublic,
-      status,
-      ip_hash: ipHash,
-    })
-    .select('*')
-    .single<WishRow>();
+  const row: Record<string, unknown> = {
+    event_id: event.id,
+    message,
+    guest_name: guestName,
+    is_anonymous: isAnonymous,
+    sticker: submission.sticker ?? null,
+    gif: submission.gif ?? null,
+    meme: submission.meme ?? null,
+    selfie_path: selfiePath,
+    selfie_public: selfiePublic,
+    status,
+    ip_hash: ipHash,
+  };
 
-  if (error) {
+  const insert = (payload: Record<string, unknown>) =>
+    supabaseAdmin().from('wishes').insert(payload).select('*').single<WishRow>();
+
+  let { data, error } = await insert(row);
+
+  /*
+   * Code and schema deploy separately: Vercel ships in seconds, a migration is
+   * a person pasting SQL. If the code lands first, every guest submission would
+   * otherwise fail with a 500 until someone notices. Rather than take the wall
+   * down, drop the column the database does not have yet and record the wish —
+   * losing only the guest's public/private photo preference, which defaults to
+   * private, the safer of the two.
+   */
+  if (error && isMissingColumn(error, 'selfie_public')) {
+    console.warn(
+      '[wish] wishes.selfie_public is missing — run supabase/migrations/0002_selfie_visibility.sql. ' +
+        'Saving this wish without the guest photo-sharing preference (defaults to private).',
+    );
+    delete row.selfie_public;
+    ({ data, error } = await insert(row));
+  }
+
+  if (error || !data) {
     if (selfiePath) await deleteSelfie(selfiePath);
-    throw new Error(error.message);
+    throw new Error(error?.message ?? 'The wish could not be saved');
   }
 
   return { wish: shapePublicWish(data, null), pending: status === 'pending' };

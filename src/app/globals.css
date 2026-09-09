@@ -274,6 +274,63 @@ button,
   background: rgb(255 255 255 / 0.9);
 }
 
+/* --------------------------------------------------------------- live wall
+   A venue screen runs for hours unattended, so the motion is pure CSS on the
+   compositor: no JS timers driving frames, nothing to leak, and it keeps going
+   even while the tab is throttled. Each column scrolls its content by exactly
+   half its height, with the list rendered twice, so the loop is seamless. */
+
+@keyframes marquee-up {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0, -50%, 0);
+  }
+}
+
+@keyframes marquee-down {
+  from {
+    transform: translate3d(0, -50%, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.marquee-track {
+  animation-name: marquee-up;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.marquee-track--down {
+  animation-name: marquee-down;
+}
+
+/* A guest watching the screen should never see it stop; but someone who asked
+   for reduced motion gets a still, readable board instead. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+@keyframes arrive-glow {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent);
+  }
+  100% {
+    box-shadow: 0 0 0 18px transparent;
+  }
+}
+
+.just-arrived {
+  animation: arrive-glow 2.4s ease-out 3;
+}
+
 /* --------------------------------------------------------------- print
    The memory book is meant to end up on paper, or as a PDF the couple keeps.
    Print gets its own treatment: a white ground, ink-friendly type, and entries

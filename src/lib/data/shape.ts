@@ -129,3 +129,17 @@ export function shapeStats(row: EventStatsRow | null | undefined): EventStats {
 }
 
 export const EMPTY_STATS: EventStats = shapeStats(null);
+
+/**
+ * True when Postgres/PostgREST rejected a statement because a column does not
+ * exist. Lets the data layer degrade gracefully on a database that has not had
+ * the newest migration applied yet, instead of failing the whole request.
+ *
+ * PGRST204 is PostgREST's schema-cache miss; 42703 is Postgres's undefined_column.
+ */
+export function isMissingColumn(error: unknown, column: string): boolean {
+  const e = error as { code?: string; message?: string } | null;
+  if (!e) return false;
+  const schemaMiss = e.code === 'PGRST204' || e.code === '42703';
+  return schemaMiss && Boolean(e.message?.includes(column));
+}

@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { BrandGlyph } from '@/components/ui/BrandMark';
 import { cn } from '@/lib/utils';
 import {
@@ -13,6 +15,7 @@ import {
   BookHeart,
   Settings,
   ExternalLink,
+  LogOut,
 } from 'lucide-react';
 
 interface Props {
@@ -34,6 +37,22 @@ const ICONS = {
 
 export default function Sidebar({ eventId, eventName, adminEmail }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+
+  /**
+   * Ends the Supabase session and clears its cookie, so the token in the
+   * browser stops working immediately rather than lingering until it expires.
+   */
+  const signOut = async () => {
+    setSigningOut(true);
+    try {
+      await createSupabaseBrowserClient().auth.signOut();
+    } finally {
+      router.replace('/admin/login');
+      router.refresh();
+    }
+  };
 
   const globalLinks = [
     { href: '/admin', label: 'Dashboard', icon: ICONS.dashboard, exact: true },
@@ -87,11 +106,23 @@ export default function Sidebar({ eventId, eventName, adminEmail }: Props) {
         </div>
       )}
 
-      <div className="mt-auto hidden border-t border-white/10 pt-4 lg:block">
+      <div className="mt-auto border-t border-white/10 pt-4">
         <p className="truncate text-[0.78rem] text-cocoa-300">{adminEmail}</p>
-        <Link href="/" className="mt-1 inline-block text-[0.78rem] text-blush-300 hover:text-blush-200">
-          View public site
-        </Link>
+
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Link href="/" className="text-[0.78rem] text-blush-300 hover:text-blush-200">
+            View public site
+          </Link>
+          <button
+            type="button"
+            onClick={signOut}
+            disabled={signingOut}
+            className="inline-flex items-center gap-1.5 text-[0.78rem] text-cocoa-300 transition-colors hover:text-white disabled:opacity-60"
+          >
+            <LogOut className="size-3.5" />
+            {signingOut ? 'Signing out…' : 'Sign out'}
+          </button>
+        </div>
       </div>
     </aside>
   );

@@ -82,6 +82,15 @@ export function isRetryable(status: number | null): boolean {
   return status === 408 || status === 425;
 }
 
+/**
+ * How many times to retry when the SERVER answered and failed.
+ *
+ * Unlimited here would strand a guest on "Still sending…" through any
+ * server-side outage. Transport failures are not capped: patchy venue signal
+ * really does come back, and the draft is safe on the device meanwhile.
+ */
+export const MAX_SERVER_RETRIES = 3;
+
 /** Exponential backoff, capped so a long outage still retries every ~30s. */
 export function retryDelay(attempt: number): number {
   return Math.min(2000 * 2 ** attempt, 30_000);

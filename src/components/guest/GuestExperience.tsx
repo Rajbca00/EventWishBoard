@@ -14,6 +14,7 @@ import { resolveTheme, themeStyle } from '@/lib/themes';
 import {
   clearPendingWish,
   isRetryable,
+  MAX_SERVER_RETRIES,
   loadPendingWish,
   retryDelay,
   savePendingWish,
@@ -92,6 +93,7 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
       setStatus(attempts.current === 0 ? 'sending' : 'retrying');
 
       let httpStatus: number | null = null;
+      let serverMessage: string | null = null;
 
       try {
         const response = await fetch(`/api/events/${event.id}/wishes`, {
@@ -129,6 +131,8 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
           return;
         }
 
+        serverMessage = data && 'error' in data ? data.error : null;
+
         // A rejected wish stays rejected however many times we send it, so
         // surface the reason instead of quietly looping.
         if (!isRetryable(httpStatus)) {
@@ -137,11 +141,7 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
           setStatus('idle');
           setDraft(payload);
           setStep('preview');
-          setError(
-            data && 'error' in data
-              ? data.error
-              : 'Your wish could not be sent. Please try again.',
-          );
+          setError(serverMessage ?? 'Your wish could not be sent. Please try again.');
           return;
         }
       } catch {
@@ -151,6 +151,28 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
       }
 
       attempts.current += 1;
+
+      /*
+       * A server that answered and failed is a different problem from a phone
+       * with no signal. Bad reception genuinely comes back, so those retry for
+       * as long as the guest keeps the page open — but a broken server will not
+       * fix itself while they wait, and leaving them on "Still sending…"
+       * forever tells them nothing. After a few tries, say so.
+       *
+       * The draft stays on the device either way, so the wish is still
+       * recovered automatically once the problem is fixed.
+       */
+      if (httpStatus !== null && attempts.current > MAX_SERVER_RETRIES) {
+        setStatus('idle');
+        setDraft(payload);
+        setStep('preview');
+        setError(
+          serverMessage ??
+            'The Wish Wall is not responding. Your wish is saved — try again in a moment.',
+        );
+        return;
+      }
+
       savePendingWish(event.id, payload, attempts.current);
       setStatus('retrying');
       retryTimer.current = window.setTimeout(

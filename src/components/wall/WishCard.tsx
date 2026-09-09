@@ -6,7 +6,8 @@ import type { PublicWish } from '@/lib/types';
 
 interface Props {
   wish: Pick<PublicWish, 'message' | 'name' | 'sticker' | 'gif' | 'meme' | 'selfieUrl'>;
-  variant?: 'wall' | 'preview';
+  /** 'live' is the venue screen: sized to be read from across a room. */
+  variant?: 'wall' | 'preview' | 'live';
   className?: string;
   style?: React.CSSProperties;
   /** Renders the media but skips the entry animation (used by the flying clone). */
@@ -20,6 +21,7 @@ function isEmoji(value: string | null): value is string {
 
 export default function WishCard({ wish, variant = 'wall', className, style, flat = false }: Props) {
   const isPreview = variant === 'preview';
+  const isLive = variant === 'live';
   const media = wish.gif ?? wish.meme;
 
   return (
@@ -27,7 +29,11 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
       className={cn(
         'glass relative flex flex-col gap-3 rounded-[1.4rem] text-left',
         'shadow-[0_22px_46px_-28px_rgb(74_44_51/0.55)]',
-        isPreview ? 'w-full max-w-[22rem] p-5' : 'w-[min(14.5rem,42vw)] gap-2.5 p-3.5 sm:w-[min(14.5rem,28vw)]',
+        isPreview && 'w-full max-w-[22rem] p-5',
+        // Everything on the venue screen scales with the viewport so one layout
+        // works on a laptop preview and a 65" TV alike.
+        isLive && 'w-full gap-[0.8vw] p-[1.2vw]',
+        !isPreview && !isLive && 'w-[min(14.5rem,42vw)] gap-2.5 p-3.5 sm:w-[min(14.5rem,28vw)]',
         !flat && 'transition-transform duration-500',
         className,
       )}
@@ -44,7 +50,7 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
         <div
           className={cn(
             'relative overflow-hidden rounded-2xl ring-1 ring-white/60',
-            isPreview ? 'h-40' : 'h-20',
+            isPreview ? 'h-40' : isLive ? 'h-[9vw]' : 'h-20',
           )}
         >
           {/* Selfies are user uploads on a signed URL, so plain img keeps it simple. */}
@@ -62,7 +68,9 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
       <p
         className={cn(
           'font-display text-balance-pretty leading-snug text-[var(--ink)]',
-          isPreview ? 'text-[1.15rem]' : 'line-clamp-3 text-[0.86rem]',
+          isPreview && 'text-[1.15rem]',
+          isLive && 'line-clamp-5 text-[1.15vw] leading-relaxed',
+          !isPreview && !isLive && 'line-clamp-3 text-[0.86rem]',
         )}
       >
         {wish.message}
@@ -74,7 +82,7 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
             <span
               className={cn(
                 'relative overflow-hidden rounded-xl bg-white/55 ring-1 ring-white/60',
-                isPreview ? 'size-16' : 'size-9',
+                isPreview ? 'size-16' : isLive ? 'size-[3vw]' : 'size-9',
               )}
             >
               <Image
@@ -89,7 +97,7 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
           )}
           {wish.sticker &&
             (isEmoji(wish.sticker) ? (
-              <span className={isPreview ? 'text-3xl' : 'text-xl'} aria-hidden>
+              <span className={isPreview ? 'text-3xl' : isLive ? 'text-[2vw]' : 'text-xl'} aria-hidden>
                 {wish.sticker}
               </span>
             ) : (
@@ -103,7 +111,9 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
       <footer
         className={cn(
           'font-display italic text-[var(--ink-soft)]',
-          isPreview ? 'text-sm' : 'text-[0.78rem]',
+          isPreview && 'text-sm',
+          isLive && 'text-[0.95vw]',
+          !isPreview && !isLive && 'text-[0.78rem]',
         )}
       >
         {wish.name ? `— ${wish.name}` : '— Anonymous'}

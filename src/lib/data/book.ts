@@ -4,10 +4,13 @@ import { supabaseAdmin } from '../supabase/admin';
 import { isSupabaseConfigured } from '../env';
 import { demoData } from '../demo/store';
 import { signSelfies } from '../images';
-import { shapeEvent } from './shape';
+import { isMissingColumn, shapeEvent } from './shape';
 import type { CelebrationEvent, EventRow, WishRow } from '../types';
 
 const demo = () => !isSupabaseConfigured();
+
+const BOOK_MIGRATION_HINT =
+  'Run supabase/migrations/0003_memory_book.sql in the Supabase SQL editor to enable the memory book.';
 
 /** One wish as it appears in the printed keepsake. */
 export interface BookWish {
@@ -50,12 +53,13 @@ export async function ensureBookToken(eventId: string): Promise<string | null> {
     return row.book_token;
   }
 
-  const { data: existing } = await supabaseAdmin()
+  const { data: existing, error: readError } = await supabaseAdmin()
     .from('events')
     .select('book_token')
     .eq('id', eventId)
     .maybeSingle<{ book_token: string | null }>();
 
+  if (readError && isMissingColumn(readError, 'book_token')) throw new Error(BOOK_MIGRATION_HINT);
   if (existing?.book_token) return existing.book_token;
 
   const token = newToken();
@@ -94,6 +98,8 @@ export async function getBookToken(eventId: string): Promise<string | null> {
     return row?.book_token ?? null;
   }
 
+  // A dashboard on a pre-migration database shows "no link yet" rather than
+  // erroring; creating one then explains exactly what to run.
   const { data } = await supabaseAdmin()
     .from('events')
     .select('book_token')
