@@ -128,3 +128,48 @@ export async function deleteAssetFile(url: string): Promise<void> {
   if (!path) return;
   await supabaseAdmin().storage.from(ASSET_BUCKET).remove([path]);
 }
+
+/**
+ * Every object path beneath a prefix, walking sub-folders.
+ *
+ * Supabase Storage has no real directories — a "folder" is just a shared path
+ * prefix, and `list()` only returns one level at a time, marking folders with a
+ * null id. Recursing is the only way to enumerate everything under an event.
+ */
+async function listPathsUnder(bucket: string, prefix: string): Promise<string[]> {
+  const { data, error } = await supabaseAdmin()
+    .storage.from(bucket)
+    .list(prefix, { limit: 1000 });
+
+  if (error || !data) return [];
+
+  const paths: string[] = [];
+  for (const entry of data) {
+    const full = prefix ? `${prefix}/${entry.name}` : entry.name;
+    // A null id marks a folder placeholder rather than a stored object.
+    if (entry.id === null) paths.push(...(await listPathsUnder(bucket, full)));
+    else paths.push(full);
+  }
+  return paths;
+}
+
+/**
+ * Deletes everything stored under an event's folder.
+ *
+ * `remove()` takes exact object paths — handing it a bare prefix silently
+ * deletes nothing, which is how uploaded stickers, GIFs and memes used to
+ * outlive the events they belonged to.
+ */
+export async function deleteStoredFolder(bucket: string, prefix: string): Promise<number> {
+  const paths = await listPathsUnder(bucket, prefix);
+  if (!paths.length) return 0;
+
+  // Storage caps how much one call will accept, so delete in batches.
+  const BATCH = 100;
+  for (let i = 0; i < paths.length; i += BATCH) {
+    await supabaseAdmin().storage.from(bucket).remove(paths.slice(i, i + BATCH));
+  }
+  return paths.length;
+}
+
+export { ASSET_BUCKET, MEMORY_BUCKET };

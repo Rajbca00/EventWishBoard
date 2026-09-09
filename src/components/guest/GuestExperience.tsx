@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MotionConfig } from 'motion/react';
 import WelcomeScreen from './WelcomeScreen';
 import IdentityStep from './IdentityStep';
@@ -11,6 +11,13 @@ import ThankYouScreen from './ThankYouScreen';
 import ClosedScreen from './ClosedScreen';
 import WishWall from '@/components/wall/WishWall';
 import { resolveTheme, themeStyle } from '@/lib/themes';
+import {
+  clearPendingWish,
+  isRetryable,
+  loadPendingWish,
+  retryDelay,
+  savePendingWish,
+} from '@/lib/pending-wish';
 import type { GuestPayload, PublicWish, WishDraft } from '@/lib/types';
 
 type Step = 'welcome' | 'identity' | 'compose' | 'selfie' | 'preview' | 'wall' | 'thanks';
@@ -23,6 +30,7 @@ const EMPTY_DRAFT: WishDraft = {
   gif: null,
   meme: null,
   selfie: null,
+  selfiePublic: false,
 };
 
 export default function GuestExperience({ payload }: { payload: GuestPayload }) {
@@ -35,7 +43,7 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
   const [submitted, setSubmitted] = useState<PublicWish | null>(null);
   const [pendingModeration, setPendingModeration] = useState(false);
   const [replay, setReplay] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'sending' | 'retrying'>('idle');
   const [error, setError] = useState<string | null>(null);
 
   const update = useCallback(
@@ -54,48 +62,149 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
     return () => window.removeEventListener('popstate', onPop);
   }, [step]);
 
-  const send = useCallback(async () => {
-    setSending(true);
-    setError(null);
+  /*
+   * Submission is deliberately stubborn.
+   *
+   * The draft is written to the device before the first request and only
+   * cleared once the server has actually accepted it, so a dropped connection,
+   * a locked phone or a closed tab cannot lose a guest's message. Transport
+   * failures retry on a backoff, and immediately whenever the phone comes back
+   * online or the guest returns to the tab.
+   */
+  const attemptRef = useRef<((value: WishDraft) => Promise<void>) | null>(null);
+  const inFlight = useRef(false);
+  const attempts = useRef(0);
+  const retryTimer = useRef<number | null>(null);
 
-    try {
-      const response = await fetch(`/api/events/${event.id}/wishes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: draft.message,
-          guestName: draft.guestName,
-          isAnonymous: draft.isAnonymous,
-          sticker: draft.sticker,
-          gif: draft.gif,
-          meme: draft.meme,
-          selfie: draft.selfie,
-        }),
-      });
+  const cancelRetry = useCallback(() => {
+    if (retryTimer.current !== null) {
+      window.clearTimeout(retryTimer.current);
+      retryTimer.current = null;
+    }
+  }, []);
 
-      const data = (await response.json()) as
-        | { wish: PublicWish; pending: boolean; wall: PublicWish[] }
-        | { error: string };
+  const attemptSend = useCallback(
+    async (payload: WishDraft) => {
+      if (inFlight.current) return;
+      inFlight.current = true;
+      cancelRetry();
+      setError(null);
+      setStatus(attempts.current === 0 ? 'sending' : 'retrying');
 
-      if (!response.ok || 'error' in data) {
-        setError('error' in data ? data.error : 'Your wish could not be sent. Please try again.');
-        return;
+      let httpStatus: number | null = null;
+
+      try {
+        const response = await fetch(`/api/events/${event.id}/wishes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: payload.message,
+            guestName: payload.guestName,
+            isAnonymous: payload.isAnonymous,
+            sticker: payload.sticker,
+            gif: payload.gif,
+            meme: payload.meme,
+            selfie: payload.selfie,
+            selfiePublic: payload.selfiePublic,
+          }),
+        });
+
+        httpStatus = response.status;
+        const data = (await response.json().catch(() => null)) as
+          | { wish: PublicWish; pending: boolean; wall: PublicWish[] }
+          | { error: string }
+          | null;
+
+        if (response.ok && data && !('error' in data)) {
+          clearPendingWish(event.id);
+          attempts.current = 0;
+          setStatus('idle');
+
+          // Show the guest's own selfie in the animation even though the stored
+          // copy stays private — the image is already here in the browser.
+          setWall(data.wall);
+          setSubmitted({ ...data.wish, selfieUrl: payload.selfie });
+          setPendingModeration(data.pending);
+          setStep(event.settings.wallEnabled ? 'wall' : 'thanks');
+          return;
+        }
+
+        // A rejected wish stays rejected however many times we send it, so
+        // surface the reason instead of quietly looping.
+        if (!isRetryable(httpStatus)) {
+          clearPendingWish(event.id);
+          attempts.current = 0;
+          setStatus('idle');
+          setDraft(payload);
+          setStep('preview');
+          setError(
+            data && 'error' in data
+              ? data.error
+              : 'Your wish could not be sent. Please try again.',
+          );
+          return;
+        }
+      } catch {
+        // Never reached the server at all — worth another go.
+      } finally {
+        inFlight.current = false;
       }
 
-      // Show the guest's own selfie in the animation even though the stored
-      // copy stays private — the image is already here in the browser.
-      const landed: PublicWish = { ...data.wish, selfieUrl: draft.selfie };
+      attempts.current += 1;
+      savePendingWish(event.id, payload, attempts.current);
+      setStatus('retrying');
+      retryTimer.current = window.setTimeout(
+        () => attemptRef.current?.(payload),
+        retryDelay(attempts.current),
+      );
+    },
+    [cancelRetry, event.id, event.settings.wallEnabled],
+  );
 
-      setWall(data.wall);
-      setSubmitted(landed);
-      setPendingModeration(data.pending);
-      setStep(event.settings.wallEnabled ? 'wall' : 'thanks');
-    } catch {
-      setError('We could not reach the Wish Wall. Check your connection and try again.');
-    } finally {
-      setSending(false);
-    }
-  }, [draft, event.id, event.settings.wallEnabled]);
+  useEffect(() => {
+    attemptRef.current = attemptSend;
+  }, [attemptSend]);
+
+  const send = useCallback(() => {
+    savePendingWish(event.id, draft, 0);
+    attempts.current = 0;
+    void attemptSend(draft);
+  }, [attemptSend, draft, event.id]);
+
+  // Resume an unfinished send as soon as there is any reason to hope.
+  useEffect(() => {
+    const resume = () => {
+      if (inFlight.current || status !== 'retrying') return;
+      const pending = loadPendingWish(event.id);
+      if (pending) void attemptRef.current?.(pending.draft);
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') resume();
+    };
+
+    window.addEventListener('online', resume);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('online', resume);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [event.id, status]);
+
+  /*
+   * Pick up a wish left unsent by an earlier visit — phone locked, tab evicted,
+   * browser restarted. `attemptSend` owns every state change from here,
+   * including putting the draft back on screen if the server rejects it, so
+   * this only has to hand over the recovered payload.
+   */
+  useEffect(() => {
+    const pending = loadPendingWish(event.id);
+    if (!pending) return;
+    attempts.current = pending.attempts;
+    void attemptSend(pending.draft);
+  }, [event.id, attemptSend]);
+
+  useEffect(() => cancelRetry, [cancelRetry]);
 
   if (event.status !== 'open') {
     return (
@@ -162,6 +271,9 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
               <SelfieStep
                 theme={theme}
                 selfie={draft.selfie}
+                sharingOffered={event.settings.publicSelfies}
+                selfiePublic={draft.selfiePublic}
+                onSelfiePublicChange={(value) => update('selfiePublic', value)}
                 onSelfieChange={(value) => update('selfie', value)}
                 onContinue={() => setStep('preview')}
                 onBack={() => setStep('compose')}
@@ -172,7 +284,8 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
               <PreviewStep
                 theme={theme}
                 draft={draft}
-                sending={sending}
+                sending={status === 'sending'}
+                retrying={status === 'retrying'}
                 error={error}
                 onSend={send}
                 onBack={() => setStep(event.settings.selfieEnabled ? 'selfie' : 'compose')}

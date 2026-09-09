@@ -57,6 +57,8 @@ export interface WishRow {
   gif: string | null;
   meme: string | null;
   selfie_path: string | null;
+  /** The guest chose to show this photo on the public wall. */
+  selfie_public: boolean;
   status: WishStatus;
   is_featured: boolean;
   is_preloaded: boolean;
@@ -129,6 +131,7 @@ export interface AdminWish extends PublicWish {
   status: WishStatus;
   preloaded: boolean;
   hasSelfie: boolean;
+  selfiePublic: boolean;
 }
 
 export interface GuestAsset {
@@ -172,6 +175,8 @@ export interface Memory {
   name: string;
   message: string;
   status: WishStatus;
+  /** The guest chose to show this photo on the public wall. */
+  isPublic: boolean;
   createdAt: string;
 }
 
@@ -189,7 +194,12 @@ export interface GuestPayload {
     themeId: ThemeId;
     settings: Pick<
       EventSettings,
-      'selfieEnabled' | 'wallEnabled' | 'charLimit' | 'showInstagram' | 'showReview'
+      | 'selfieEnabled'
+      | 'wallEnabled'
+      | 'charLimit'
+      | 'showInstagram'
+      | 'showReview'
+      | 'publicSelfies'
     >;
     status: EventStatus;
   };
@@ -207,4 +217,6 @@ export interface WishDraft {
   meme: string | null;
   /** Base64 data URL, compressed in the browser before it is sent. */
   selfie: string | null;
+  /** Guest's choice: show the photo on the wall, or keep it for the hosts. */
+  selfiePublic: boolean;
 }

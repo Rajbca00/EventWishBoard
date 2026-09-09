@@ -73,8 +73,18 @@ export default function MemoryGallery({ eventId, memories }: Props) {
                 className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 loading="lazy"
               />
-              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/65 to-transparent px-2.5 pb-2 pt-6 text-left text-[0.74rem] text-white">
-                {memory.name}
+              <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/65 to-transparent px-2.5 pb-2 pt-6 text-left text-[0.74rem] text-white">
+                <span className="truncate">{memory.name}</span>
+                <span
+                  title={
+                    memory.isPublic
+                      ? 'This guest chose to show their photo on the Wish Wall'
+                      : 'Private — this guest chose to share it only with you'
+                  }
+                  aria-label={memory.isPublic ? 'Shown publicly' : 'Private to you'}
+                >
+                  {memory.isPublic ? '💫' : '🔒'}
+                </span>
               </span>
             </button>
           </li>
@@ -98,7 +108,8 @@ export default function MemoryGallery({ eventId, memories }: Props) {
             <div className="p-4">
               <p className="text-[0.92rem] text-[var(--ink)]">{open.message}</p>
               <p className="mt-1 text-[0.78rem] text-[var(--ink-soft)]">
-                {open.name} · {formatDateTime(open.createdAt)}
+                {open.name} · {formatDateTime(open.createdAt)} ·{' '}
+                {open.isPublic ? '💫 shown on the wall' : '🔒 private to you'}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">

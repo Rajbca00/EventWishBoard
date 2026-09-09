@@ -50,7 +50,10 @@ export async function getWallWishes(
       .slice(0, limit)
       .reverse()
       .map((row) =>
-        shapePublicWish(row, event.settings.publicSelfies ? row.selfie_path : null),
+        shapePublicWish(
+          row,
+          event.settings.publicSelfies && row.selfie_public ? row.selfie_path : null,
+        ),
       );
   }
 
@@ -66,14 +69,20 @@ export async function getWallWishes(
   if (error) throw new Error(error.message);
   const rows = ((data ?? []) as WishRow[]).slice().reverse();
 
-  // Guest photos stay private unless the organiser turned sharing on.
+  // A photo reaches the wall only when the organiser allows sharing AND the
+  // guest chose to share theirs. Either one saying no keeps it private.
+  const shareable = (row: WishRow) =>
+    event.settings.publicSelfies && row.selfie_public && Boolean(row.selfie_path);
+
   if (!event.settings.publicSelfies) {
     return rows.map((row) => shapePublicWish(row, null));
   }
 
-  const signed = await signSelfies(rows.map((row) => row.selfie_path).filter(Boolean) as string[]);
+  const signed = await signSelfies(
+    rows.filter(shareable).map((row) => row.selfie_path as string),
+  );
   return rows.map((row) =>
-    shapePublicWish(row, row.selfie_path ? (signed.get(row.selfie_path) ?? null) : null),
+    shapePublicWish(row, shareable(row) ? (signed.get(row.selfie_path as string) ?? null) : null),
   );
 }
 
@@ -139,6 +148,9 @@ export async function submitGuestWish(
     event.settings.moderation === 'manual' || looksLikeSpam(message) ? 'pending' : 'approved';
 
   const wantsSelfie = Boolean(submission.selfie && event.settings.selfieEnabled);
+  // The organiser's setting is the ceiling: a guest cannot publish a photo at
+  // an event where sharing is switched off.
+  const selfiePublic = wantsSelfie && event.settings.publicSelfies && Boolean(submission.selfiePublic);
 
   if (demo()) {
     const row: WishRow = {
@@ -151,6 +163,7 @@ export async function submitGuestWish(
       gif: submission.gif ?? null,
       meme: submission.meme ?? null,
       selfie_path: wantsSelfie ? (submission.selfie ?? null) : null,
+      selfie_public: selfiePublic,
       status,
       is_featured: false,
       is_preloaded: false,
@@ -177,6 +190,7 @@ export async function submitGuestWish(
       gif: submission.gif ?? null,
       meme: submission.meme ?? null,
       selfie_path: selfiePath,
+      selfie_public: selfiePublic,
       status,
       ip_hash: ipHash,
     })
@@ -210,6 +224,7 @@ export async function createPreloadedWish(
       gif: null,
       meme: null,
       selfie_path: null,
+      selfie_public: false,
       status: 'approved',
       is_featured: false,
       is_preloaded: true,
@@ -334,6 +349,7 @@ export async function listMemories(eventId: string): Promise<Memory[]> {
         name: row.is_anonymous ? 'Anonymous' : (row.guest_name ?? 'Anonymous'),
         message: row.message,
         status: row.status,
+        isPublic: row.selfie_public,
         createdAt: row.created_at,
       }));
   }
@@ -360,6 +376,7 @@ export async function listMemories(eventId: string): Promise<Memory[]> {
         name: row.is_anonymous ? 'Anonymous' : (row.guest_name ?? 'Anonymous'),
         message: row.message,
         status: row.status,
+        isPublic: row.selfie_public,
         createdAt: row.created_at,
       } satisfies Memory;
     })

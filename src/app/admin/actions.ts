@@ -11,6 +11,7 @@ import {
 } from '@/lib/data/events';
 import { createPreloadedWish, deleteWish, removeSelfie, updateWish } from '@/lib/data/wishes';
 import { createAsset, deleteAsset, updateAsset } from '@/lib/data/assets';
+import { ensureBookToken, revokeBookToken } from '@/lib/data/book';
 import {
   assetPatchSchema,
   assetUploadSchema,
@@ -160,6 +161,27 @@ export async function deleteAssetAction(eventId: string, assetId: string): Promi
   return guard(async () => {
     await deleteAsset(assetId);
     refreshEvent(eventId);
+    return undefined;
+  });
+}
+
+/* ------------------------------------------------------------------ memory book */
+
+/** Creates the couple's share link, or returns the one already issued. */
+export async function createBookLinkAction(eventId: string): Promise<ActionResult<{ token: string }>> {
+  return guard(async () => {
+    const token = await ensureBookToken(eventId);
+    if (!token) throw new Error('Event not found');
+    revalidatePath(`/admin/events/${eventId}/book`);
+    return { token };
+  });
+}
+
+/** Invalidates every link already shared for this event. */
+export async function revokeBookLinkAction(eventId: string): Promise<ActionResult> {
+  return guard(async () => {
+    await revokeBookToken(eventId);
+    revalidatePath(`/admin/events/${eventId}/book`);
     return undefined;
   });
 }

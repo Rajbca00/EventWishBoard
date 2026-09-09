@@ -274,6 +274,54 @@ button,
   background: rgb(255 255 255 / 0.9);
 }
 
+/* --------------------------------------------------------------- print
+   The memory book is meant to end up on paper, or as a PDF the couple keeps.
+   Print gets its own treatment: a white ground, ink-friendly type, and entries
+   that never break across a page. */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .book {
+    background: #fff !important;
+  }
+
+  /* Screen decoration costs toner and adds nothing on paper. */
+  .book header > div[aria-hidden],
+  .book .glass {
+    background: none !important;
+    box-shadow: none !important;
+  }
+
+  .book-entry {
+    /* Keep a wish and its author on the same page. */
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border-color: #e3d7d1 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    padding: 12pt 0 !important;
+    border-width: 0 0 1px 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .book footer {
+    break-before: avoid;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+}
+
 /* --------------------------------------------------------------- focus */
 
 :focus-visible {

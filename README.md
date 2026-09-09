@@ -55,12 +55,17 @@ Supabase credentials are present.
 Sign up at [supabase.com](https://supabase.com) and create a new project. The free tier
 is comfortably enough for several events.
 
-### 2. Run the migration
+### 2. Run the migrations
 
-Open **SQL Editor → New query**, paste the entire contents of
-[`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql), and run it.
+Open **SQL Editor → New query** and run each file in `supabase/migrations/` **in order**:
 
-That single script creates:
+| File | What it adds |
+| --- | --- |
+| [`0001_init.sql`](supabase/migrations/0001_init.sql) | Tables, RLS, storage buckets, default sticker library |
+| [`0002_selfie_visibility.sql`](supabase/migrations/0002_selfie_visibility.sql) | Per-guest choice of who sees their photo |
+| [`0003_memory_book.sql`](supabase/migrations/0003_memory_book.sql) | Share token for the post-event memory book |
+
+Each one is additive and safe to re-run. Between them they create:
 
 - the `events`, `wishes`, `assets`, `admin_users` and `scans` tables
 - the `event_stats` view that powers the dashboard counters
@@ -188,6 +193,41 @@ Three things keep it robust on real phones:
 - **A stalled animation cannot trap a guest.** Backgrounded tabs starve
   `requestAnimationFrame`, so if the flight never reports completion the card lands
   anyway after a short timeout.
+
+### Wishes survive bad venue wifi
+
+Banquet halls and marquees have famously poor connectivity, so a submission is
+never allowed to evaporate. The draft is written to the guest's device *before*
+the first request and cleared only once the server has accepted it. A transport
+failure retries on a backoff, and immediately when the phone comes back online
+or the guest returns to the tab — including after the browser has killed the tab
+entirely. A wish the server genuinely rejects (event closed, rate limited) shows
+the real reason instead of retrying forever.
+
+### Guest photos: two locks, not one
+
+Selfie visibility layers two independent decisions, and a photo reaches the
+public wall only if both say yes:
+
+| Decision | Where | Default |
+| --- | --- | --- |
+| May guests share photos at all? | Organiser, in event settings | Off |
+| Does *this* guest want to share theirs? | Guest, on the selfie step | Private |
+
+If the organiser leaves sharing off, the choice is never offered and every photo
+stays private. If they turn it on, each guest still picks "Just the hosts" or
+"Show it on the Wish Wall", with private preselected. The Memories gallery marks
+which is which, so you can see at a glance what each guest agreed to.
+
+### The memory book
+
+After the event, the organiser generates a private link to a printable keepsake
+of every approved wish — cover, counts, each message with its author and photo,
+and a Laya & Bee colophon. It is unlisted, `noindex`, revocable at any time, and
+styled for A4 so "Print → Save as PDF" produces something worth keeping.
+
+The book contains **every** photo, including ones guests marked hosts-only,
+because it is the hosts' own copy. The dashboard says so before you share it.
 
 ### Never an empty wall
 

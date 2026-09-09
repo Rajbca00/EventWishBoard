@@ -87,6 +87,7 @@ export function shapeAdminWish(row: WishRow, selfieUrl: string | null = null): A
     status: row.status,
     preloaded: row.is_preloaded,
     hasSelfie: Boolean(row.selfie_path),
+    selfiePublic: row.selfie_public,
   };
 }
 
