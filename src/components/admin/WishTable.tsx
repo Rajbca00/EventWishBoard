@@ -125,7 +125,7 @@ export default function WishTable({ eventId, wishes }: Props) {
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-[0.92rem] leading-snug text-[var(--ink)]">{wish.message}</p>
+                  <p className="font-display text-[1rem] leading-snug text-[var(--ink)]">{wish.message}</p>
 
                   <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.76rem] text-[var(--ink-soft)]">
                     <span className="font-medium text-[var(--ink)]">

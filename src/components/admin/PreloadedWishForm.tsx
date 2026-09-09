@@ -53,7 +53,7 @@ export default function PreloadedWishForm({ eventId }: { eventId: string }) {
         onChange={(e) => setMessage(e.target.value)}
         rows={3}
         placeholder="Wishing you a lifetime of happiness ❤️"
-        className="w-full resize-none rounded-xl border border-[var(--card-line)] bg-white px-3.5 py-3 text-[0.92rem] text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+        className="font-display w-full resize-none rounded-xl border border-[var(--card-line)] bg-white px-3.5 py-3 text-[1.02rem] leading-relaxed text-[var(--ink)] outline-none focus:border-[var(--accent)]"
       />
 
       <div className="mt-3 flex flex-wrap gap-1.5">
