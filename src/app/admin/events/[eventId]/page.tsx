@@ -117,7 +117,7 @@ export default async function EventOverviewPage({ params }: PageProps) {
                       {wish.sticker && !wish.sticker.startsWith('/') ? wish.sticker : '💌'}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="line-clamp-2 block text-[0.9rem] text-[var(--ink)]">
+                      <span className="font-display line-clamp-2 block text-[0.98rem] leading-snug text-[var(--ink)]">
                         {wish.message}
                       </span>
                       <span className="mt-0.5 block text-[0.76rem] text-[var(--ink-soft)]">

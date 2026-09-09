@@ -106,7 +106,7 @@ export default function MemoryGallery({ eventId, memories }: Props) {
             <img src={open.selfieUrl} alt={`Photo from ${open.name}`} className="w-full object-contain" />
 
             <div className="p-4">
-              <p className="text-[0.92rem] text-[var(--ink)]">{open.message}</p>
+              <p className="font-display text-[1rem] leading-snug text-[var(--ink)]">{open.message}</p>
               <p className="mt-1 text-[0.78rem] text-[var(--ink-soft)]">
                 {open.name} · {formatDateTime(open.createdAt)} ·{' '}
                 {open.isPublic ? '💫 shown on the wall' : '🔒 private to you'}
