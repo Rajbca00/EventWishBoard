@@ -8,7 +8,7 @@ import { siteUrl } from '@/lib/env';
 
 interface PageProps {
   params: Promise<{ eventId: string }>;
-  searchParams: Promise<{ refresh?: string }>;
+  searchParams: Promise<{ refresh?: string; motion?: string }>;
 }
 
 // A venue screen must always show the current wall, never a cached one.
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function LiveWallPage({ params, searchParams }: PageProps) {
   const { eventId } = await params;
-  const { refresh } = await searchParams;
+  const { refresh, motion } = await searchParams;
 
   const event = await getEvent(eventId);
   if (!event) notFound();
@@ -33,7 +33,7 @@ export default async function LiveWallPage({ params, searchParams }: PageProps) 
   const wishes = await getWallWishes(event, 60);
   const theme = resolveTheme(event.themeId);
 
-  // ?refresh=15 lets a venue tune the polling without a redeploy.
+  // ?refresh=15 tunes polling; ?motion=off stills the board.
   const seconds = Math.min(Math.max(Number(refresh) || 30, 10), 300);
 
   return (
@@ -45,6 +45,7 @@ export default async function LiveWallPage({ params, searchParams }: PageProps) 
         guestUrl={`${siteUrl()}/event/${event.id}`}
         initialWishes={wishes}
         refreshSeconds={seconds}
+        forceMotion={motion !== 'off'}
       />
     </div>
   );

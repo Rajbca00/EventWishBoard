@@ -342,6 +342,69 @@ button,
   }
 }
 
+/* Showcase drift. A handful of wishes cannot scroll as a ribbon, so each card
+   wanders its own slow path instead. Translations are percentages of the card
+   itself, so the motion stays proportional from a laptop to a 65" TV. */
+@keyframes wander {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--tilt, 0deg));
+  }
+  25% {
+    transform: translate3d(3%, -4%, 0) rotate(calc(var(--tilt, 0deg) + 1.6deg));
+  }
+  50% {
+    transform: translate3d(-2%, -6.5%, 0) rotate(var(--tilt, 0deg));
+  }
+  75% {
+    transform: translate3d(-3.5%, -2.5%, 0) rotate(calc(var(--tilt, 0deg) - 1.6deg));
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--tilt, 0deg));
+  }
+}
+
+.wander {
+  animation: wander var(--wander-duration, 18s) ease-in-out infinite;
+  will-change: transform;
+}
+
+/*
+ * The venue screen is signage, not a document someone chose to read: an
+ * operator points a projector at it and walks away. If the laptop driving that
+ * projector has reduced motion enabled for its owner's own comfort, the board
+ * would otherwise sit frozen all evening.
+ *
+ * Durations come from custom properties rather than literals because the
+ * global reduced-motion reset sets `animation-duration: 0.001ms !important` on
+ * every element, and an inline style cannot outrank that — but a rule that is
+ * itself !important can, and custom properties pass through it untouched.
+ *
+ * ?motion=off restores the reset for anyone who needs stillness.
+ */
+.force-motion .wander,
+.force-motion .marquee-track {
+  animation-play-state: running !important;
+  animation-iteration-count: infinite !important;
+  animation-timing-function: linear !important;
+}
+
+.force-motion .wander {
+  animation-name: wander !important;
+  animation-duration: var(--wander-duration, 18s) !important;
+  animation-timing-function: ease-in-out !important;
+  transform: none;
+}
+
+.force-motion .marquee-track {
+  animation-name: marquee-up !important;
+  animation-duration: var(--marquee-duration, 80s) !important;
+  transform: none;
+}
+
+.force-motion .marquee-track--down {
+  animation-name: marquee-down !important;
+}
+
 @keyframes arrive-glow {
   0% {
     box-shadow: 0 0 0 0 var(--accent);
