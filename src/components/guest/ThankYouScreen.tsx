@@ -68,7 +68,7 @@ export default function ThankYouScreen({ theme, event, pending, onViewWall }: Pr
         <Reveal
           as="h1"
           delay={0.08}
-          className="font-display text-[2.4rem] leading-tight tracking-tight text-[var(--ink)]"
+          className="font-display type-hero text-[var(--ink)]"
         >
           Thank You!
         </Reveal>
@@ -76,7 +76,7 @@ export default function ThankYouScreen({ theme, event, pending, onViewWall }: Pr
         <Reveal
           as="p"
           delay={0.16}
-          className="mt-3 max-w-xs text-balance-pretty text-[0.98rem] leading-relaxed text-[var(--ink-soft)]"
+          className="type-body mt-3 max-w-xs text-balance-pretty text-[var(--ink-soft)]"
         >
           {pending
             ? 'Your wish has been sent to the hosts and will appear on the wall shortly.'

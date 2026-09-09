@@ -37,7 +37,7 @@ export default function ClosedScreen({ theme, event, wall, reason }: Props) {
             {event.hosts || event.name}
           </p>
 
-          <h1 className="mt-4 font-display text-[2.2rem] leading-tight tracking-tight text-[var(--ink)]">
+          <h1 className="font-display type-title mt-4 text-balance text-[var(--ink)]">
             {reason === 'full'
               ? 'This Wish Wall is full of love 💕'
               : 'This Wish Wall has closed 💕'}

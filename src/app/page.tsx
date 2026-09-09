@@ -29,9 +29,6 @@ export default async function HomePage() {
     <div style={themeStyle(theme)} className="relative isolate min-h-[100dvh] overflow-hidden">
       <SceneBackground theme={theme} intensity="full" seed="landing" />
 
-      {/* The chocolate drip from the packaging, along the top edge */}
-      <div className="choc-drip pointer-events-none absolute inset-x-0 top-0 z-20 h-[4.5rem] sm:h-24" aria-hidden />
-
       <main className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-5xl flex-col items-center justify-center px-6 py-20 text-center">
         <BrandWordmark size="lg" />
 

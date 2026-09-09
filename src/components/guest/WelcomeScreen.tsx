@@ -37,7 +37,7 @@ export default function WelcomeScreen({ theme, event, wishCount, onStart }: Prop
         <Reveal
           as="p"
           delay={0.05}
-          className="mb-4 text-[0.7rem] uppercase tracking-[0.32em] text-[var(--ink-soft)]"
+          className="type-eyebrow mb-4 text-[var(--ink-soft)]"
         >
           {theme.emoji} Leave a little love
         </Reveal>
@@ -45,7 +45,7 @@ export default function WelcomeScreen({ theme, event, wishCount, onStart }: Prop
         <Reveal
           as="h1"
           delay={0.15}
-          className="font-display text-[2.35rem] leading-[1.1] tracking-tight text-balance text-[var(--ink)] sm:text-6xl"
+          className="font-display type-hero text-balance text-[var(--ink)]"
         >
           Add your wishes for
           <span className="mt-2 block shimmer-text">{headline}</span>
@@ -64,7 +64,7 @@ export default function WelcomeScreen({ theme, event, wishCount, onStart }: Prop
         <Reveal
           as="p"
           delay={0.32}
-          className="text-balance-pretty mt-6 max-w-sm text-[0.98rem] leading-relaxed text-[var(--ink-soft)]"
+          className="text-balance-pretty type-body mt-6 max-w-sm text-[var(--ink-soft)]"
         >
           {event.welcomeMessage || 'Your message will become part of their digital Wish Wall.'}
         </Reveal>

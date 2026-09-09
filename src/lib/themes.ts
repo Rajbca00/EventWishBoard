@@ -37,7 +37,7 @@ export const THEMES: Record<ThemeId, Theme> = {
       '--wall-3': '#fff2e4',
     },
     confetti: ['#d4738f', '#d8a657', '#ffffff', '#f6c8d6', '#c9a7e8'],
-    decor: ['balloon', 'petal', 'heart', 'sparkle', 'ring'],
+    decor: ['balloon', 'petal', 'heart', 'sparkle', 'ring', 'macaron', 'slice', 'choc'],
   },
   birthday: {
     id: 'birthday',
@@ -60,7 +60,7 @@ export const THEMES: Record<ThemeId, Theme> = {
       '--wall-3': '#fff3d9',
     },
     confetti: ['#e07a5f', '#e8b04b', '#7fb2e5', '#ffffff', '#f2a1c0'],
-    decor: ['balloon', 'confetti', 'star', 'sparkle', 'cake'],
+    decor: ['balloon', 'confetti', 'star', 'sparkle', 'cake', 'donut', 'cookie', 'slice'],
   },
   engagement: {
     id: 'engagement',
@@ -83,7 +83,7 @@ export const THEMES: Record<ThemeId, Theme> = {
       '--wall-3': '#fdeff3',
     },
     confetti: ['#b56ea8', '#d9ab5e', '#ffffff', '#e8c9e6', '#a99bea'],
-    decor: ['petal', 'ring', 'heart', 'sparkle', 'balloon'],
+    decor: ['petal', 'ring', 'heart', 'sparkle', 'balloon', 'macaron', 'donut', 'choc'],
   },
   celebration: {
     id: 'celebration',
@@ -106,7 +106,7 @@ export const THEMES: Record<ThemeId, Theme> = {
       '--wall-3': '#fff2e0',
     },
     confetti: ['#c97b62', '#dfae5c', '#ffffff', '#f0bdb0', '#b6a5e8'],
-    decor: ['balloon', 'confetti', 'sparkle', 'star', 'gift'],
+    decor: ['balloon', 'confetti', 'sparkle', 'star', 'gift', 'cake', 'cookie', 'choc'],
   },
 };
 
