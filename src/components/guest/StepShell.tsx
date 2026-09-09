@@ -80,11 +80,11 @@ export default function StepShell({
       </header>
 
       <main className="reveal relative z-10 flex flex-1 flex-col px-5 pt-8">
-        <h1 className="font-display text-[1.85rem] leading-[1.15] tracking-tight text-[var(--ink)]">
+        <h1 className="font-display type-title text-balance text-[var(--ink)]">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2 text-[0.92rem] leading-relaxed text-[var(--ink-soft)]">{subtitle}</p>
+          <p className="type-body mt-2 text-[var(--ink-soft)]">{subtitle}</p>
         )}
 
         <div className="mt-7 flex-1">{children}</div>

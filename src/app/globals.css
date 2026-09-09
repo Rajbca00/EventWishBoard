@@ -86,18 +86,6 @@
   --card-line: rgb(56 32 14 / 0.14);
 }
 
-/* The chocolate drip from the packaging, as a reusable banner edge. Drawn as an
-   SVG mask so it scales to any width without repeating visibly. */
-.choc-drip {
-  background: linear-gradient(180deg, var(--brand-cocoa), #2a1809);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24' preserveAspectRatio='none'%3E%3Cpath d='M0 0h120v10c-4 0-5 4-8 4s-4-2-7-2-4 6-8 6-5-7-9-7-4 3-7 3-4-4-8-4-5 5-9 5-4-6-8-6-4 3-7 3-5-3-9-3-4 4-8 4-5-5-9-5-4 3-8 3-4-4-7-4V0Z'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24' preserveAspectRatio='none'%3E%3Cpath d='M0 0h120v10c-4 0-5 4-8 4s-4-2-7-2-4 6-8 6-5-7-9-7-4 3-7 3-4-4-8-4-5 5-9 5-4-6-8-6-4 3-7 3-5-3-9-3-4 4-8 4-5-5-9-5-4 3-8 3-4-4-7-4V0Z'/%3E%3C/svg%3E");
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-}
-
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -115,7 +103,53 @@ body {
   /* Keeps the composer usable when a mobile keyboard is open. */
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Let variable fonts pick the right optical size for how big they render. */
+  font-optical-sizing: auto;
+  font-synthesis-weight: none;
+}
+
+/*
+ * Fluid type. Heading sizes come from clamp() rather than breakpoint jumps, so
+ * they grow smoothly with the viewport instead of snapping at 640px — the
+ * difference is very visible on the odd widths real phones actually have.
+ *
+ * Each step also tightens its tracking as it grows: letterspacing that reads
+ * well at 24px looks loose at 64px.
+ */
+.type-hero {
+  font-size: clamp(2.1rem, 8.5vw, 4.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.022em;
+}
+
+.type-title {
+  font-size: clamp(1.6rem, 5.6vw, 2.5rem);
+  line-height: 1.14;
+  letter-spacing: -0.015em;
+}
+
+.type-section {
+  font-size: clamp(1.15rem, 3.4vw, 1.5rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.type-body {
+  font-size: clamp(0.95rem, 2.9vw, 1.05rem);
+  line-height: 1.6;
+}
+
+.type-eyebrow {
+  font-size: clamp(0.64rem, 2.1vw, 0.75rem);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* Optical nicety: the display serif sets a touch tighter at large sizes. */
+.font-display {
+  font-feature-settings: 'kern' 1, 'liga' 1;
 }
 
 /* Large touch targets everywhere in the guest flow. */
@@ -243,11 +277,50 @@ button,
   }
 }
 
+/* Background decor moves in three different ways, because one shared drift
+   made a balloon and a biscuit behave identically and the scene read as a
+   texture rather than a room. */
+
+/* Balloons rise and sway, as balloons do. */
+@keyframes lift {
+  0% {
+    transform: translate3d(0, 6px, 0) rotate(-2deg);
+  }
+  33% {
+    transform: translate3d(9px, -14px, 0) rotate(2.5deg);
+  }
+  66% {
+    transform: translate3d(-6px, -26px, 0) rotate(-1.5deg);
+  }
+  100% {
+    transform: translate3d(0, 6px, 0) rotate(-2deg);
+  }
+}
+
+/* Desserts tumble slowly, as though set down mid-air. */
+@keyframes tumble {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+  50% {
+    transform: translate3d(-8px, -16px, 0) rotate(7deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+}
+
 .animate-float {
   animation: float-y 6s ease-in-out infinite;
 }
 .animate-drift {
   animation: drift 9s ease-in-out infinite;
+}
+.animate-lift {
+  animation: lift var(--decor-duration, 14s) ease-in-out infinite;
+}
+.animate-tumble {
+  animation: tumble var(--decor-duration, 11s) ease-in-out infinite;
 }
 .animate-twinkle {
   animation: twinkle 3.2s ease-in-out infinite;

@@ -151,6 +151,72 @@ export const Ribbon = memo(function Ribbon({ className, style, color = '#f0b8c8'
   );
 });
 
+
+/* ------------------------------------------------------------------ desserts
+   The brand is a bakery, so the scene should have something to eat in it. Each
+   piece is drawn flat and soft-edged: at 20-50px behind content, detail turns
+   to noise, and silhouette is all that survives. */
+
+export const Donut = memo(function Donut({ className, style, color = '#e8a9bd', size = 34 }: PieceProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 36 36" fill="none" className={className} style={style} aria-hidden>
+      <circle cx="18" cy="18" r="15" fill="#e9c9a8" />
+      <path
+        d="M18 3c8.3 0 15 6.7 15 15 0 2.3-.5 4.5-1.4 6.4-1.6-1.1-3.2-.4-4.6.4-1.6.9-3.1 1.7-5 .6-2-1.2-2-3-2-4.7 0-1.9 0-3.7-2.2-4.9-2.2-1.2-3.9-.2-5.4.7-1.4.8-2.7 1.5-4.3.6C6.4 16.6 5.5 15 4.3 14A15 15 0 0 1 18 3Z"
+        fill={color}
+      />
+      <circle cx="18" cy="18" r="5" fill="#fdf6ec" />
+      <circle cx="12" cy="9" r="1.1" fill="#fff3d9" />
+      <circle cx="25" cy="11" r="1.1" fill="#fff3d9" />
+      <circle cx="27" cy="20" r="1.1" fill="#fff3d9" />
+    </svg>
+  );
+});
+
+export const Macaron = memo(function Macaron({ className, style, color = '#f2b8cd', size = 30 }: PieceProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 34 26" fill="none" className={className} style={style} aria-hidden>
+      <path d="M3 9.5C3 5.4 9.3 2 17 2s14 3.4 14 7.5c0 1.6-1 2.5-2.4 2.5H5.4C4 12 3 11.1 3 9.5Z" fill={color} />
+      <rect x="4.6" y="11.4" width="24.8" height="4.2" rx="2.1" fill="#f6e3c8" />
+      <path d="M3 16.5C3 20.6 9.3 24 17 24s14-3.4 14-7.5c0-1.6-1-2.5-2.4-2.5H5.4C4 14 3 14.9 3 16.5Z" fill={color} />
+    </svg>
+  );
+});
+
+export const Cookie = memo(function Cookie({ className, style, size = 30 }: PieceProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" className={className} style={style} aria-hidden>
+      <circle cx="16" cy="16" r="14" fill="#e2b378" />
+      <circle cx="11" cy="12" r="2.3" fill="#5c3a1e" />
+      <circle cx="21" cy="14" r="2" fill="#5c3a1e" />
+      <circle cx="15" cy="21" r="2.2" fill="#5c3a1e" />
+      <circle cx="23" cy="22" r="1.5" fill="#5c3a1e" />
+      <circle cx="8" cy="19" r="1.4" fill="#5c3a1e" />
+    </svg>
+  );
+});
+
+export const ChocolateChunk = memo(function ChocolateChunk({ className, style, size = 22 }: PieceProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} style={style} aria-hidden>
+      <path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5v-9Z" fill="#6b3f21" />
+      <path d="M12 3v18M3 7.5 12 12l9-4.5" stroke="#8a5730" strokeWidth="1.3" />
+      <path d="M12 3 21 7.5 12 12 3 7.5 12 3Z" fill="#8a5730" />
+    </svg>
+  );
+});
+
+export const CakeSlice = memo(function CakeSlice({ className, style, size = 34 }: PieceProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 34 30" fill="none" className={className} style={style} aria-hidden>
+      <path d="M4 24 17 4l13 20H4Z" fill="#f4d9bd" />
+      <path d="M9.6 15.4h14.8L27 19.6H7L9.6 15.4Z" fill="#e8a9bd" />
+      <path d="M4 24h26v2.4a1.6 1.6 0 0 1-1.6 1.6H5.6A1.6 1.6 0 0 1 4 26.4V24Z" fill="#6b3f21" />
+      <circle cx="17" cy="6.4" r="2" fill="#d95f83" />
+    </svg>
+  );
+});
+
 export const DECOR_COMPONENTS = {
   balloon: Balloon,
   heart: Heart,
@@ -159,6 +225,11 @@ export const DECOR_COMPONENTS = {
   ring: Ring,
   star: Star,
   cake: Cupcake,
+  donut: Donut,
+  macaron: Macaron,
+  cookie: Cookie,
+  choc: ChocolateChunk,
+  slice: CakeSlice,
   gift: Gift,
   confetti: ConfettiStrip,
   ribbon: Ribbon,
