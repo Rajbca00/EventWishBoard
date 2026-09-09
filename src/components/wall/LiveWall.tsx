@@ -19,6 +19,12 @@ interface Props {
   initialWishes: PublicWish[];
   /** How often to look for new wishes, in seconds. */
   refreshSeconds?: number;
+  /**
+   * Keep the board drifting even if the machine asks for reduced motion.
+   * Defaults on: this is a display an operator set up, not a page someone
+   * navigated to. ?motion=off turns it back off.
+   */
+  forceMotion?: boolean;
 }
 
 /** Slower columns read as further away, which stops the board feeling like a grid. */
@@ -40,8 +46,13 @@ export default function LiveWall({
   guestUrl,
   initialWishes,
   refreshSeconds = 30,
+  forceMotion = true,
 }: Props) {
-  const reducedMotion = usePrefersReducedMotion();
+  const prefersReduced = usePrefersReducedMotion();
+  // A venue display is not someone's personal screen: if the laptop driving the
+  // projector has reduced motion on for its owner's comfort, the board should
+  // still be allowed to drift. ?motion=on makes that an explicit choice.
+  const reducedMotion = prefersReduced && !forceMotion;
   const [wishes, setWishes] = useState<PublicWish[]>(initialWishes);
   const [arrivals, setArrivals] = useState<PublicWish[]>([]);
   const [columns, setColumns] = useState(3);
@@ -162,16 +173,20 @@ export default function LiveWall({
       const random = seededRandom(`showcase:${eventId}:${wish.id}`);
       return {
         wish,
-        delay: random() * 4,
-        duration: 7 + random() * 5,
-        tilt: (random() - 0.5) * 4,
+        delay: random() * 20,
+        duration: 16 + random() * 12,
+        tilt: (random() - 0.5) * 5,
         key: `${wish.id}-${index}`,
       };
     });
   }, [wishes, eventId, scrolling]);
 
   return (
-    <div className="relative isolate h-dvh w-screen overflow-hidden bg-[var(--bg-1)]">
+    <div
+      className={`relative isolate h-dvh w-screen overflow-hidden bg-[var(--bg-1)] ${
+        forceMotion ? 'force-motion' : ''
+      }`}
+    >
       <SceneBackground theme={theme} intensity="full" seed={`live:${eventId}`} />
 
       {/* ------------------------------------------------------------ header */}
@@ -207,6 +222,14 @@ export default function LiveWall({
           scrolling ? 'grid gap-[1.6vw]' : 'flex flex-wrap content-center items-center justify-center gap-[2vw]'
         }`}
         style={{
+          // Showcase cards hold the whole screen between them, so their type
+          // can be far larger than a scrolling column's.
+          ['--live-text' as string]: scrolling
+            ? 'clamp(0.95rem, 1.2vw, 2.1rem)'
+            : 'clamp(1.35rem, 2vw, 3.4rem)',
+          ['--live-meta' as string]: scrolling
+            ? 'clamp(0.78rem, 0.9vw, 1.5rem)'
+            : 'clamp(1rem, 1.25vw, 2rem)',
           gridTemplateColumns: scrolling ? `repeat(${columns}, minmax(0, 1fr))` : undefined,
           // Leave room for the header and footer bands.
           paddingTop: '18vh',
@@ -217,11 +240,11 @@ export default function LiveWall({
         {showcase.map((entry) => (
           <div
             key={entry.key}
-            className={reducedMotion ? undefined : 'animate-float'}
+            className="wander"
             style={{
-              animationDelay: `${entry.delay}s`,
-              animationDuration: `${entry.duration}s`,
-              transform: `rotate(${entry.tilt}deg)`,
+              ['--tilt' as string]: `${entry.tilt}deg`,
+              ['--wander-duration' as string]: `${entry.duration}s`,
+              animationDelay: `-${entry.delay}s`,
               // The fewer there are, the more room each one gets — two wishes
               // should feel like a centrepiece, not two lost cards.
               width: `min(${Math.max(20, 38 - showcase.length * 3)}vw, ${
@@ -244,6 +267,7 @@ export default function LiveWall({
                 lane.reverse ? 'marquee-track--down' : ''
               }`}
               style={{
+                ['--marquee-duration' as string]: `${lane.duration}s`,
                 animationDuration: `${lane.duration}s`,
                 animationDelay: `${lane.delay}s`,
                 animationPlayState: reducedMotion ? 'paused' : 'running',

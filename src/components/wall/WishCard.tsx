@@ -69,7 +69,7 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
         className={cn(
           'font-display text-balance-pretty leading-snug text-[var(--ink)]',
           isPreview && 'text-[1.15rem]',
-          isLive && 'line-clamp-5 text-[1.15vw] leading-relaxed',
+          isLive && 'line-clamp-6 text-[length:var(--live-text,clamp(0.95rem,1.2vw,2.1rem))] leading-relaxed',
           !isPreview && !isLive && 'line-clamp-3 text-[0.86rem]',
         )}
       >
@@ -112,7 +112,7 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
         className={cn(
           'font-display italic text-[var(--ink-soft)]',
           isPreview && 'text-sm',
-          isLive && 'text-[0.95vw]',
+          isLive && 'text-[length:var(--live-meta,clamp(0.78rem,0.9vw,1.5rem))]',
           !isPreview && !isLive && 'text-[0.78rem]',
         )}
       >
