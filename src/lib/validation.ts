@@ -17,6 +17,7 @@ export const wishSubmissionSchema = z.object({
   gif: z.string().max(400).nullable().optional(),
   meme: z.string().max(400).nullable().optional(),
   selfie: dataUrl.nullable().optional(),
+  selfiePublic: z.boolean().optional().default(false),
 });
 
 export type WishSubmission = z.infer<typeof wishSubmissionSchema>;

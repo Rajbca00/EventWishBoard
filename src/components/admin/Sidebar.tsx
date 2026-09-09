@@ -10,6 +10,7 @@ import {
   MessageCircleHeart,
   Images,
   Sticker,
+  BookHeart,
   Settings,
   ExternalLink,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ const ICONS = {
   wishes: MessageCircleHeart,
   memories: Images,
   assets: Sticker,
+  book: BookHeart,
   settings: Settings,
 } as const;
 
@@ -44,6 +46,7 @@ export default function Sidebar({ eventId, eventName, adminEmail }: Props) {
         { href: `/admin/events/${eventId}/wishes`, label: 'Wishes', icon: ICONS.wishes, exact: false },
         { href: `/admin/events/${eventId}/memories`, label: 'Memories', icon: ICONS.memories, exact: false },
         { href: `/admin/events/${eventId}/assets`, label: 'Assets', icon: ICONS.assets, exact: false },
+        { href: `/admin/events/${eventId}/book`, label: 'Memory book', icon: ICONS.book, exact: false },
         { href: `/admin/events/${eventId}/settings`, label: 'Settings', icon: ICONS.settings, exact: false },
       ]
     : [];

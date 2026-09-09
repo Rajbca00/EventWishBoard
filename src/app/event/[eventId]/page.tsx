@@ -58,6 +58,7 @@ export default async function EventPage({ params }: PageProps) {
         charLimit: event.settings.charLimit,
         showInstagram: event.settings.showInstagram,
         showReview: event.settings.showReview,
+        publicSelfies: event.settings.publicSelfies,
       },
       status,
     },

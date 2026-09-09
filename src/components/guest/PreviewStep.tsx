@@ -11,6 +11,8 @@ interface Props {
   theme: Theme;
   draft: WishDraft;
   sending: boolean;
+  /** A send failed on the network and is being retried in the background. */
+  retrying?: boolean;
   error: string | null;
   onSend: () => void;
   onBack: () => void;
@@ -20,7 +22,16 @@ interface Props {
  * The last beat before the payoff: show the guest exactly what the couple
  * will see, so sending feels like a decision rather than a form submit.
  */
-export default function PreviewStep({ theme, draft, sending, error, onSend, onBack }: Props) {
+export default function PreviewStep({
+  theme,
+  draft,
+  sending,
+  retrying = false,
+  error,
+  onSend,
+  onBack,
+}: Props) {
+  const busy = sending || retrying;
   const name = draft.isAnonymous ? null : draft.guestName.trim() || null;
 
   return (
@@ -34,13 +45,13 @@ export default function PreviewStep({ theme, draft, sending, error, onSend, onBa
       seed="preview"
       footer={
         <div className="space-y-2">
-          <Button size="lg" fullWidth loading={sending} onClick={onSend}>
-            💌 Send My Wish
+          <Button size="lg" fullWidth loading={busy} onClick={onSend} disabled={busy}>
+            {retrying ? 'Still sending…' : '💌 Send My Wish'}
           </Button>
           <button
             type="button"
             onClick={onBack}
-            disabled={sending}
+            disabled={busy}
             className="w-full py-2 text-[0.85rem] text-[var(--ink-soft)] transition-opacity disabled:opacity-50"
           >
             ← Edit
@@ -75,8 +86,25 @@ export default function PreviewStep({ theme, draft, sending, error, onSend, onBa
 
       {draft.selfie && (
         <p className="mt-5 text-center text-[0.78rem] text-[var(--ink-soft)]">
-          🔒 Your photo is shared privately with the hosts
+          {draft.selfiePublic
+            ? '💫 Your photo will appear on the Wish Wall'
+            : '🔒 Your photo is shared privately with the hosts'}
         </p>
+      )}
+
+      {retrying && (
+        <div
+          className="glass mt-6 flex items-start gap-2.5 rounded-2xl px-4 py-3.5 text-left"
+          role="status"
+        >
+          <span className="mt-0.5 text-base" aria-hidden>
+            ✉️
+          </span>
+          <p className="text-[0.84rem] leading-relaxed text-[var(--ink-soft)]">
+            <span className="font-medium text-[var(--ink)]">Your wish is saved on this phone.</span>{' '}
+            The signal here is patchy, so we&rsquo;ll keep sending it — you can stay on this screen.
+          </p>
+        </div>
       )}
 
       {error && (

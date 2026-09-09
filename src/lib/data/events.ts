@@ -1,5 +1,6 @@
 import 'server-only';
-import { supabaseAdmin } from '../supabase/admin';
+import { supabaseAdmin, ASSET_BUCKET, MEMORY_BUCKET } from '../supabase/admin';
+import { deleteStoredFolder } from '../images';
 import { isSupabaseConfigured } from '../env';
 import { demoData, demoStats } from '../demo/store';
 import { normalizeExpiry, slugify } from '../utils';
@@ -232,16 +233,13 @@ export async function deleteEvent(id: string): Promise<void> {
 
   const admin = supabaseAdmin();
 
-  const { data: selfies } = await admin
-    .from('wishes')
-    .select('selfie_path')
-    .eq('event_id', id)
-    .not('selfie_path', 'is', null);
-
-  const paths = ((selfies ?? []) as { selfie_path: string }[]).map((row) => row.selfie_path);
-  if (paths.length) await admin.storage.from('memories').remove(paths);
-
-  await admin.storage.from('assets').remove([`${id}`]).catch(() => undefined);
+  // Sweep both buckets by prefix rather than by the paths recorded in the
+  // database: that also catches anything orphaned by an earlier failure, and
+  // guarantees no guest photo outlives the event it was taken at.
+  await Promise.all([
+    deleteStoredFolder(MEMORY_BUCKET, id),
+    deleteStoredFolder(ASSET_BUCKET, id),
+  ]);
 
   const { error } = await admin.from('events').delete().eq('id', id);
   if (error) throw new Error(error.message);

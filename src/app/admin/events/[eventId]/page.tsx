@@ -66,6 +66,18 @@ export default async function EventOverviewPage({ params }: PageProps) {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-5">
+          {status === 'full' && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-[0.88rem] text-amber-800">
+              This wall has reached its limit of {event.settings.maxWishes}{' '}
+              {event.settings.maxWishes === 1 ? 'wish' : 'wishes'}, so guests now see the closing
+              screen instead of the composer.{' '}
+              <Link href={`/admin/events/${event.id}/settings`} className="underline">
+                Raise the limit
+              </Link>{' '}
+              — or set it to 0 for unlimited.
+            </div>
+          )}
+
           {stats.pending > 0 && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-[0.88rem] text-amber-800">
               {stats.pending} {stats.pending === 1 ? 'wish is' : 'wishes are'} waiting for review.{' '}

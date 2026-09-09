@@ -10,16 +10,80 @@ import type { Theme } from '@/lib/themes';
 interface Props {
   theme: Theme;
   selfie: string | null;
+  /** The organiser allows photos on the public wall for this event. */
+  sharingOffered?: boolean;
+  selfiePublic?: boolean;
+  onSelfiePublicChange?: (value: boolean) => void;
   onSelfieChange: (value: string | null) => void;
   onContinue: () => void;
   onBack: () => void;
+}
+
+interface ChoiceProps {
+  selected: boolean;
+  icon: string;
+  title: string;
+  detail: string;
+  onSelect: () => void;
+}
+
+function VisibilityChoice({ selected, icon, title, detail, onSelect }: ChoiceProps) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={`glass flex w-full items-start gap-3 rounded-2xl px-4 py-3.5 text-left transition-all duration-200 ${
+        selected ? 'ring-2' : 'opacity-80'
+      }`}
+      style={selected ? ({ ['--tw-ring-color' as string]: 'var(--accent)' } as React.CSSProperties) : undefined}
+    >
+      <span className="mt-0.5 text-lg" aria-hidden>
+        {icon}
+      </span>
+      <span className="flex-1">
+        <span className="block text-[0.92rem] font-medium text-[var(--ink)]">{title}</span>
+        <span className="mt-0.5 block text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
+          {detail}
+        </span>
+      </span>
+      <span
+        className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+          selected ? 'border-transparent' : 'border-[var(--card-line)]'
+        }`}
+        style={selected ? { background: 'var(--accent)' } : undefined}
+      >
+        {selected && (
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path
+              d="m5 12.5 4.5 4.5L19 7"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </span>
+    </button>
+  );
 }
 
 /**
  * Entirely optional. Two clearly-labelled inputs rather than a permissions
  * prompt: `capture` opens the front camera on a phone, the other is the gallery.
  */
-export default function SelfieStep({ theme, selfie, onSelfieChange, onContinue, onBack }: Props) {
+export default function SelfieStep({
+  theme,
+  selfie,
+  sharingOffered = false,
+  selfiePublic = false,
+  onSelfiePublicChange,
+  onSelfieChange,
+  onContinue,
+  onBack,
+}: Props) {
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -48,7 +112,11 @@ export default function SelfieStep({ theme, selfie, onSelfieChange, onContinue, 
       totalSteps={4}
       onBack={onBack}
       title="Add yourself to their memories 📸"
-      subtitle="Completely optional — your photo goes straight to the hosts, never onto the public wall."
+      subtitle={
+        sharingOffered
+          ? 'Completely optional — and you choose who gets to see it.'
+          : 'Completely optional — your photo goes straight to the hosts, never onto the public wall.'
+      }
       seed="selfie"
       footer={
         <div className="space-y-2">
@@ -84,7 +152,13 @@ export default function SelfieStep({ theme, selfie, onSelfieChange, onContinue, 
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="space-y-4"
         >
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-[17rem] overflow-hidden rounded-[1.6rem] ring-2 ring-white/70 shadow-[0_26px_50px_-28px_rgb(74_44_51/0.6)]">
+          {/* A smaller preview when the visibility choice follows, so the guest
+              can see the photo and the decision about it without scrolling. */}
+          <div
+            className={`relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-[1.6rem] ring-2 ring-white/70 shadow-[0_26px_50px_-28px_rgb(74_44_51/0.6)] ${
+              sharingOffered ? 'max-w-[11rem]' : 'max-w-[17rem]'
+            }`}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={selfie} alt="Your selfie" className="size-full object-cover" />
           </div>
@@ -95,6 +169,30 @@ export default function SelfieStep({ theme, selfie, onSelfieChange, onContinue, 
           >
             Retake
           </button>
+
+          {/* The photo is the guest's, so the guest decides where it goes.
+              Private is preselected — sharing has to be a deliberate choice. */}
+          {sharingOffered && onSelfiePublicChange && (
+            <fieldset className="space-y-2 pt-1" role="radiogroup">
+              <legend className="mb-2 text-[0.82rem] font-medium text-[var(--ink)]">
+                Who can see your photo?
+              </legend>
+              <VisibilityChoice
+                selected={!selfiePublic}
+                icon="🔒"
+                title="Just the hosts"
+                detail="Kept in their private album. No other guest sees it."
+                onSelect={() => onSelfiePublicChange(false)}
+              />
+              <VisibilityChoice
+                selected={selfiePublic}
+                icon="💫"
+                title="Show it on the Wish Wall"
+                detail="Anyone who scans the QR code will see your photo."
+                onSelect={() => onSelfiePublicChange(true)}
+              />
+            </fieldset>
+          )}
         </motion.div>
       ) : (
         <div className="space-y-3">

@@ -191,8 +191,8 @@ export default function EventForm({ event }: Props) {
             onChange={(v) => setSetting('wallEnabled', v)}
           />
           <Toggle
-            label="Show selfies publicly on the wall"
-            hint="Off by default — guest photos stay private to you"
+            label="Let guests share their photo on the wall"
+            hint="Off by default. When on, each guest still chooses privately or publicly — and private is preselected for them."
             checked={settings.publicSelfies}
             onChange={(v) => setSetting('publicSelfies', v)}
           />
@@ -237,7 +237,14 @@ export default function EventForm({ event }: Props) {
             />
           </Field>
 
-          <Field label="Maximum wishes" hint="0 means unlimited">
+          <Field
+            label="Maximum wishes"
+            hint={
+              settings.maxWishes > 0
+                ? `The wall closes to guests after ${settings.maxWishes}. Use 0 for unlimited.`
+                : 'Unlimited. Set a number only if you want the wall to close early.'
+            }
+          >
             <input
               type="number"
               min={0}
