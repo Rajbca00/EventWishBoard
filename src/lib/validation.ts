@@ -71,6 +71,28 @@ export const wishSubmissionSchema = z
 
 export type WishSubmission = z.infer<typeof wishSubmissionSchema>;
 
+/** One generated test wish. Same caps as a real one; the marker is set server-side. */
+export const seedWishSchema = z.object({
+  message: z.string().trim().min(1).max(LIMITS.wishChars),
+  guestName: z.string().trim().max(LIMITS.nameChars).nullable().optional(),
+  isAnonymous: z.boolean().optional().default(false),
+  stickers: decorationList(LIMITS.maxStickers),
+  gifs: decorationList(LIMITS.maxGifs),
+  memes: decorationList(LIMITS.maxMemes),
+  selfie: selfieDataUrl.nullable().optional(),
+  selfiePublic: z.boolean().optional().default(false),
+  featured: z.boolean().optional().default(false),
+  status: z.enum(['pending', 'approved', 'hidden']).optional().default('approved'),
+});
+
+/**
+ * Batches are capped at ten so that one request never has to carry more than a
+ * few megabytes of photos, whatever the organiser typed into the count box.
+ */
+export const seedBatchSchema = z.object({
+  wishes: z.array(seedWishSchema).min(1).max(10),
+});
+
 export const eventSettingsSchema = z.object({
   selfieEnabled: z.boolean(),
   wallEnabled: z.boolean(),
