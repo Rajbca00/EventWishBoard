@@ -7,8 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "check": "node scripts/check-supabase.mjs"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "check": "node scripts/check-supabase.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",
@@ -28,14 +31,16 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^20",
+    "@types/node": "^22.20.2",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "jsdom": "^30.0.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.0"
   },
-  "description": "Laya & Bee Wish Wall — an interactive wish collection experience for weddings, birthdays and celebrations."
+  "description": "Laya & Bee Wish Wall \u2014 an interactive wish collection experience for weddings, birthdays and celebrations."
 }

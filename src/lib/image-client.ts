@@ -45,7 +45,7 @@ export interface CompressResult {
  * will show, and leaves enough detail to print a 4×6. JPEG rather than WebP:
  * the archive is a keepsake people take to a print shop, and every print shop
  * on earth accepts a .jpg. */
-const SELFIE_DEFAULTS: Required<Omit<CompressOptions, 'mimeType'>> & { mimeType: 'image/jpeg' } = {
+export const SELFIE_DEFAULTS: Required<Omit<CompressOptions, 'mimeType'>> & { mimeType: 'image/jpeg' } = {
   maxEdge: 1200,
   quality: 0.8,
   minQuality: 0.62,
