@@ -150,13 +150,13 @@ export default function SelfieStep({
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-4"
+          className="space-y-3"
         >
           {/* A smaller preview when the visibility choice follows, so the guest
               can see the photo and the decision about it without scrolling. */}
           <div
-            className={`relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-[1.6rem] ring-2 ring-white/70 shadow-[0_26px_50px_-28px_rgb(74_44_51/0.6)] ${
-              sharingOffered ? 'max-w-[11rem]' : 'max-w-[17rem]'
+            className={`relative mx-auto aspect-[4/5] w-full overflow-hidden rounded-2xl ring-2 ring-white/70 shadow-[0_18px_36px_-24px_rgb(94_58_46/0.55)] ${
+              sharingOffered ? 'max-w-[8.5rem]' : 'max-w-[12rem]'
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -196,50 +196,64 @@ export default function SelfieStep({
         </motion.div>
       ) : (
         <div className="space-y-3">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => cameraRef.current?.click()}
-            className="glass flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 rounded-[1.6rem] transition-transform active:scale-[0.98] disabled:opacity-60"
-          >
-            <span
-              className="flex size-16 items-center justify-center rounded-full"
-              style={{ background: 'var(--accent-soft)' }}
+          {/* Two compact tiles side by side. The old single 4:3 block ran to
+              roughly 500px on a phone, pushing the visibility choice — the
+              decision that actually matters — below the fold. */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => cameraRef.current?.click()}
+              className="glass flex h-28 flex-col items-center justify-center gap-2 rounded-2xl transition-transform active:scale-[0.98] disabled:opacity-60"
             >
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path
-                  d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2a1 1 0 0 0 .84-.46l.72-1.1A1 1 0 0 1 10.1 4h3.8a1 1 0 0 1 .84.44l.72 1.1a1 1 0 0 0 .84.46h1.2A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"
-                  stroke="var(--accent-2)"
-                  strokeWidth="1.6"
-                />
-                <circle cx="12" cy="12.5" r="3.4" stroke="var(--accent-2)" strokeWidth="1.6" />
-              </svg>
-            </span>
-            <span className="font-display text-[1.1rem] text-[var(--ink)]">
-              {busy ? 'Processing…' : 'Take Selfie'}
-            </span>
-          </button>
+              <span
+                className="flex size-11 items-center justify-center rounded-full"
+                style={{ background: 'var(--accent-soft)' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path
+                    d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.2a1 1 0 0 0 .84-.46l.72-1.1A1 1 0 0 1 10.1 4h3.8a1 1 0 0 1 .84.44l.72 1.1a1 1 0 0 0 .84.46h1.2A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z"
+                    stroke="var(--accent-2)"
+                    strokeWidth="1.6"
+                  />
+                  <circle cx="12" cy="12.5" r="3.4" stroke="var(--accent-2)" strokeWidth="1.6" />
+                </svg>
+              </span>
+              <span className="text-[0.9rem] font-medium text-[var(--ink)]">
+                {busy ? 'Processing…' : 'Take a photo'}
+              </span>
+            </button>
 
-          <div className="flex items-center gap-3 py-1">
-            <span className="h-px flex-1" style={{ background: 'var(--card-line)' }} />
-            <span className="text-[0.75rem] uppercase tracking-[0.2em] text-[var(--ink-soft)]/70">or</span>
-            <span className="h-px flex-1" style={{ background: 'var(--card-line)' }} />
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => galleryRef.current?.click()}
+              className="glass flex h-28 flex-col items-center justify-center gap-2 rounded-2xl transition-transform active:scale-[0.98] disabled:opacity-60"
+            >
+              <span
+                className="flex size-11 items-center justify-center rounded-full"
+                style={{ background: 'var(--accent-soft)' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="var(--accent-2)" strokeWidth="1.6" />
+                  <circle cx="8.5" cy="10" r="1.5" fill="var(--accent-2)" />
+                  <path
+                    d="m4 17 4.8-4.6a1.6 1.6 0 0 1 2.2 0L15 16"
+                    stroke="var(--accent-2)"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <span className="text-[0.9rem] font-medium text-[var(--ink)]">Upload</span>
+            </button>
           </div>
 
-          <Button
-            variant="outline"
-            size="lg"
-            fullWidth
-            loading={busy}
-            onClick={() => galleryRef.current?.click()}
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
-              <circle cx="8.5" cy="10" r="1.6" fill="currentColor" />
-              <path d="m4 17 4.8-4.6a1.6 1.6 0 0 1 2.2 0L15 16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-            </svg>
-            Upload Photo
-          </Button>
+          {sharingOffered && (
+            <p className="pt-1 text-center text-[0.8rem] text-[var(--ink-soft)]">
+              You&rsquo;ll choose who can see it next.
+            </p>
+          )}
         </div>
       )}
 
