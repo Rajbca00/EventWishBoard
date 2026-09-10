@@ -22,18 +22,52 @@ const selfieDataUrl = dataUrl.max(
   'That photo is too large',
 );
 
-/** What a guest submits from the wish composer. */
-export const wishSubmissionSchema = z.object({
-  message: z.string().trim().min(1, 'Write a little something first').max(LIMITS.wishChars),
-  guestName: z.string().trim().max(LIMITS.nameChars).optional().default(''),
-  isAnonymous: z.boolean().optional().default(false),
-  sticker: z.string().max(400).nullable().optional(),
-  gif: z.string().max(400).nullable().optional(),
-  meme: z.string().max(400).nullable().optional(),
-  /** Exactly one photo per wish, or none. */
-  selfie: selfieDataUrl.nullable().optional(),
-  selfiePublic: z.boolean().optional().default(false),
-});
+const decoration = z.string().trim().min(1).max(400);
+
+const decorationList = (max: number) =>
+  z
+    .array(decoration)
+    .max(max)
+    // The same sticker twice is a mis-tap, not a choice.
+    .transform((values) => [...new Set(values)])
+    .optional()
+    .default([]);
+
+/**
+ * What a guest submits from the wish composer.
+ *
+ * The singular `sticker`/`gif`/`meme` fields are still accepted. A wish that
+ * failed to send is kept on the device and retried later, so a draft saved
+ * before multi-select shipped can still arrive days afterwards — dropping the
+ * fields would quietly discard exactly the wishes this app went out of its way
+ * to save.
+ */
+export const wishSubmissionSchema = z
+  .object({
+    message: z.string().trim().min(1, 'Write a little something first').max(LIMITS.wishChars),
+    guestName: z.string().trim().max(LIMITS.nameChars).optional().default(''),
+    isAnonymous: z.boolean().optional().default(false),
+    stickers: decorationList(LIMITS.maxStickers),
+    gifs: decorationList(LIMITS.maxGifs),
+    memes: decorationList(LIMITS.maxMemes),
+    sticker: decoration.nullable().optional(),
+    gif: decoration.nullable().optional(),
+    meme: decoration.nullable().optional(),
+    /** Exactly one photo per wish, or none. */
+    selfie: selfieDataUrl.nullable().optional(),
+    selfiePublic: z.boolean().optional().default(false),
+  })
+  .transform((value) => {
+    const merge = (list: string[], one: string | null | undefined, max: number) =>
+      [...new Set(one ? [...list, one] : list)].slice(0, max);
+
+    return {
+      ...value,
+      stickers: merge(value.stickers, value.sticker, LIMITS.maxStickers),
+      gifs: merge(value.gifs, value.gif, LIMITS.maxGifs),
+      memes: merge(value.memes, value.meme, LIMITS.maxMemes),
+    };
+  });
 
 export type WishSubmission = z.infer<typeof wishSubmissionSchema>;
 
@@ -71,7 +105,8 @@ export const preloadedWishSchema = z.object({
   message: z.string().trim().min(1).max(LIMITS.wishChars),
   guestName: z.string().trim().max(LIMITS.nameChars).optional().default(''),
   isAnonymous: z.boolean().optional().default(true),
-  sticker: z.string().max(400).nullable().optional(),
+  sticker: decoration.nullable().optional(),
+  stickers: decorationList(LIMITS.maxStickers),
 });
 
 export const assetUploadSchema = z

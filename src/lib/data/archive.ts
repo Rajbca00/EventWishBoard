@@ -60,12 +60,15 @@ function buildHtml(book: MemoryBook, imageFor: Map<string, string>): string {
   const cards = wishes
     .map((wish, index) => {
       const photo = wish.selfieUrl ? imageFor.get(wish.id) : null;
+      // Only emoji travel into the offline page: the library art lives on the
+      // web server the archive is meant to outlive.
+      const emoji = wish.stickers.filter((value) => !value.startsWith('/') && !value.startsWith('http'));
       return `      <li class="wish">
         ${photo ? `<img class="photo" src="${photo}" alt="Photo from ${escapeHtml(wish.name ?? 'a guest')}">` : ''}
         <div class="body">
           <p class="message">${escapeHtml(wish.message)}</p>
           <p class="author">— ${escapeHtml(wish.name ?? 'Anonymous')}${
-            wish.sticker && !wish.sticker.startsWith('/') ? ` <span>${escapeHtml(wish.sticker)}</span>` : ''
+            emoji.length ? ` <span>${escapeHtml(emoji.join(' '))}</span>` : ''
           }</p>
         </div>
         <span class="num">${String(index + 1).padStart(2, '0')}</span>
@@ -166,13 +169,15 @@ export async function buildArchive(eventId: string): Promise<ArchiveManifest | n
   });
 
   const csv = [
-    ['number', 'message', 'name', 'photo_file', 'featured', 'received'].join(','),
+    ['number', 'message', 'name', 'photo_file', 'stickers', 'media', 'featured', 'received'].join(','),
     ...wishes.map((wish, index) =>
       [
         index + 1,
         wish.message,
         wish.name ?? 'Anonymous',
         imageFor.get(wish.id) ?? '',
+        wish.stickers.join(' '),
+        wish.media.join(' '),
         wish.featured ? 'yes' : 'no',
         wish.createdAt,
       ]
@@ -195,7 +200,8 @@ export async function buildArchive(eventId: string): Promise<ArchiveManifest | n
         number: index + 1,
         message: wish.message,
         name: wish.name,
-        sticker: wish.sticker,
+        stickers: wish.stickers,
+        media: wish.media,
         photo: imageFor.get(wish.id) ?? null,
         featured: wish.featured,
         receivedAt: wish.createdAt,

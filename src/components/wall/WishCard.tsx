@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import type { PublicWish } from '@/lib/types';
 
 interface Props {
-  wish: Pick<PublicWish, 'message' | 'name' | 'sticker' | 'gif' | 'meme' | 'selfieUrl'>;
+  wish: Pick<PublicWish, 'message' | 'name' | 'stickers' | 'gifs' | 'memes' | 'selfieUrl'>;
   /** 'live' is the venue screen: sized to be read from across a room. */
   variant?: 'wall' | 'preview' | 'live';
   className?: string;
@@ -15,14 +15,16 @@ interface Props {
 }
 
 /** A sticker is stored either as an emoji or as an image URL. */
-function isEmoji(value: string | null): value is string {
-  return Boolean(value && !value.startsWith('/') && !value.startsWith('http'));
+function isEmoji(value: string): boolean {
+  return !value.startsWith('/') && !value.startsWith('http');
 }
 
 export default function WishCard({ wish, variant = 'wall', className, style, flat = false }: Props) {
   const isPreview = variant === 'preview';
   const isLive = variant === 'live';
-  const media = wish.gif ?? wish.meme;
+  // GIFs first, then memes: the animated pieces are the ones worth noticing.
+  const media = [...wish.gifs, ...wish.memes];
+  const stickers = wish.stickers;
 
   return (
     <article
@@ -86,35 +88,42 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
         {wish.message}
       </p>
 
-      {(media || wish.sticker) && (
-        <div className="flex items-center gap-2">
-          {media && (
+      {(media.length > 0 || stickers.length > 0) && (
+        // Wraps rather than scrolls: a guest may pick several, and a card that
+        // clipped the last one would look broken rather than full.
+        <div className="flex flex-wrap items-center gap-2">
+          {media.map((src) => (
             <span
+              key={src}
               className={cn(
-                'relative overflow-hidden rounded-xl bg-white/55 ring-1 ring-white/60',
+                'relative shrink-0 overflow-hidden rounded-xl bg-white/55 ring-1 ring-white/60',
                 isPreview ? 'size-16' : isLive ? 'size-[3vw]' : 'size-9',
               )}
             >
-              <Image
-                src={media}
-                alt=""
-                fill
-                sizes="64px"
-                className="object-contain p-1"
-                unoptimized
-              />
+              <Image src={src} alt="" fill sizes="64px" className="object-contain p-1" unoptimized />
             </span>
-          )}
-          {wish.sticker &&
-            (isEmoji(wish.sticker) ? (
-              <span className={isPreview ? 'text-3xl' : isLive ? 'text-[2vw]' : 'text-xl'} aria-hidden>
-                {wish.sticker}
+          ))}
+          {stickers.map((value) =>
+            isEmoji(value) ? (
+              <span
+                key={value}
+                className={cn(
+                  'shrink-0 leading-none',
+                  isPreview ? 'text-3xl' : isLive ? 'text-[2vw]' : 'text-xl',
+                )}
+                aria-hidden
+              >
+                {value}
               </span>
             ) : (
-              <span className={cn('relative', isPreview ? 'size-9' : 'size-7')}>
-                <Image src={wish.sticker} alt="" fill sizes="36px" className="object-contain" unoptimized />
+              <span
+                key={value}
+                className={cn('relative shrink-0', isPreview ? 'size-9' : isLive ? 'size-[2vw]' : 'size-7')}
+              >
+                <Image src={value} alt="" fill sizes="36px" className="object-contain" unoptimized />
               </span>
-            ))}
+            ),
+          )}
         </div>
       )}
 

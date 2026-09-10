@@ -27,9 +27,9 @@ const EMPTY_DRAFT: WishDraft = {
   message: '',
   guestName: '',
   isAnonymous: false,
-  sticker: null,
-  gif: null,
-  meme: null,
+  stickers: [],
+  gifs: [],
+  memes: [],
   selfie: null,
   selfiePublic: false,
 };
@@ -103,9 +103,9 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
             message: payload.message,
             guestName: payload.guestName,
             isAnonymous: payload.isAnonymous,
-            sticker: payload.sticker,
-            gif: payload.gif,
-            meme: payload.meme,
+            stickers: payload.stickers,
+            gifs: payload.gifs,
+            memes: payload.memes,
             selfie: payload.selfie,
             selfiePublic: payload.selfiePublic,
           }),
@@ -277,13 +277,13 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
                 assets={assets}
                 message={draft.message}
                 charLimit={event.settings.charLimit}
-                sticker={draft.sticker}
-                gif={draft.gif}
-                meme={draft.meme}
+                stickers={draft.stickers}
+                gifs={draft.gifs}
+                memes={draft.memes}
                 onMessageChange={(value) => update('message', value)}
-                onStickerChange={(value) => update('sticker', value)}
-                onGifChange={(value) => update('gif', value)}
-                onMemeChange={(value) => update('meme', value)}
+                onStickersChange={(value) => update('stickers', value)}
+                onGifsChange={(value) => update('gifs', value)}
+                onMemesChange={(value) => update('memes', value)}
                 onContinue={() => setStep(event.settings.selfieEnabled ? 'selfie' : 'preview')}
                 onBack={() => setStep('identity')}
               />

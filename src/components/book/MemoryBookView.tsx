@@ -107,24 +107,17 @@ export default function MemoryBookView({ book }: { book: MemoryBook }) {
                         — {wish.name ?? 'Anonymous'}
                       </p>
 
-                      {wish.sticker && isEmoji(wish.sticker) && (
-                        <span className="text-lg" aria-hidden>
-                          {wish.sticker}
+                      {wish.stickers.filter(isEmoji).map((value) => (
+                        <span key={value} className="text-lg" aria-hidden>
+                          {value}
                         </span>
-                      )}
+                      ))}
 
-                      {wish.media && (
-                        <span className="relative inline-block size-8">
-                          <Image
-                            src={wish.media}
-                            alt=""
-                            fill
-                            sizes="32px"
-                            className="object-contain"
-                            unoptimized
-                          />
+                      {wish.media.map((src) => (
+                        <span key={src} className="relative inline-block size-8">
+                          <Image src={src} alt="" fill sizes="32px" className="object-contain" unoptimized />
                         </span>
-                      )}
+                      ))}
 
                       {wish.featured && (
                         <span

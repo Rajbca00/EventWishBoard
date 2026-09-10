@@ -114,7 +114,7 @@ export default async function EventOverviewPage({ params }: PageProps) {
                 {recent.map((wish) => (
                   <li key={wish.id} className="flex items-start gap-3 px-5 py-3.5">
                     <span className="mt-0.5 text-lg" aria-hidden>
-                      {wish.sticker && !wish.sticker.startsWith('/') ? wish.sticker : '💌'}
+                      {wish.stickers.find((value) => !value.startsWith('/')) ?? '💌'}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="font-display line-clamp-2 block text-[0.98rem] leading-snug text-[var(--ink)]">

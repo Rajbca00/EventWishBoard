@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Dance floor">
+
+  <g transform="translate(42 96)">
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="-9;9;-9"
+        dur="1.6s" repeatCount="indefinite" calcMode="spline"
+        keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" keyTimes="0;0.5;1"/>
+      <circle cx="0" cy="-52" r="9" fill="#7a4a3c"/>
+      <path d="M0 -43v22" stroke="#e5789c" stroke-width="9" stroke-linecap="round"/>
+      <path d="M0 -38l-12 8M0 -38l13 6" stroke="#7a4a3c" stroke-width="4" stroke-linecap="round"/>
+      <path d="M0 -21l-7 21M0 -21l8 21" stroke="#7a4a3c" stroke-width="4.4" stroke-linecap="round"/>
+    </g>
+  </g>
+  <g transform="translate(78 96)">
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="9;-9;9"
+        dur="1.6s" repeatCount="indefinite" calcMode="spline"
+        keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" keyTimes="0;0.5;1"/>
+      <circle cx="0" cy="-52" r="9" fill="#8b5a48"/>
+      <path d="M0 -43v22" stroke="#d8a657" stroke-width="9" stroke-linecap="round"/>
+      <path d="M0 -38l12 8M0 -38l-13 6" stroke="#8b5a48" stroke-width="4" stroke-linecap="round"/>
+      <path d="M0 -21l7 21M0 -21l-8 21" stroke="#8b5a48" stroke-width="4.4" stroke-linecap="round"/>
+    </g>
+  </g>
+  <g transform="translate(22 46)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 10; 0 -18"
+        dur="2.6s" repeatCount="indefinite"/>
+      <text x="0" y="0" font-size="15" fill="#b98ad4" aria-hidden="true">&#9834;</text>
+      <animate attributeName="opacity" values="0;1;0" dur="2.6s" repeatCount="indefinite"/>
+    </g>
+  </g>
+  <g transform="translate(94 38)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 12; 0 -16"
+        dur="3.0s" begin="-1.2s" repeatCount="indefinite"/>
+      <text x="0" y="0" font-size="13" fill="#e5789c" aria-hidden="true">&#9835;</text>
+      <animate attributeName="opacity" values="0;1;0" dur="3.0s" begin="-1.2s" repeatCount="indefinite"/>
+    </g>
+  </g>
+</svg>

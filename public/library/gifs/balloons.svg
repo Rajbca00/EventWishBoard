@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Balloons rising">
+  <g transform="translate(36 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 122; 0 -34"
+        dur="4.0s" begin="-0.0s" repeatCount="indefinite"/>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-7;7;-7"
+          dur="2.6s" begin="-0.0s" repeatCount="indefinite"/>
+        <path d="M0 26q-4-3-4-7 0-3 4-3t4 3q0 4-4 7Z" fill="#e5789c" opacity=".75"
+              transform="scale(1.00)"/>
+        <ellipse cx="0" cy="0" rx="13.0" ry="16.0" fill="#e5789c"/>
+        <ellipse cx="-4.0" cy="-5.0" rx="3.4" ry="4.6"
+                 fill="#ffffff" opacity=".45"/>
+        <path d="M0 16.0q3 8-2 14t2 12" stroke="#e5789c" stroke-opacity=".55"
+              stroke-width="1.4" fill="none"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(60 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 122; 0 -34"
+        dur="4.6s" begin="-1.5s" repeatCount="indefinite"/>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-7;7;-7"
+          dur="2.6s" begin="-0.7s" repeatCount="indefinite"/>
+        <path d="M0 26q-4-3-4-7 0-3 4-3t4 3q0 4-4 7Z" fill="#f0c96b" opacity=".75"
+              transform="scale(1.15)"/>
+        <ellipse cx="0" cy="0" rx="14.9" ry="18.4" fill="#f0c96b"/>
+        <ellipse cx="-4.6" cy="-5.8" rx="3.9" ry="5.3"
+                 fill="#ffffff" opacity=".45"/>
+        <path d="M0 18.4q3 8-2 14t2 12" stroke="#f0c96b" stroke-opacity=".55"
+              stroke-width="1.4" fill="none"/>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(84 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 122; 0 -34"
+        dur="4.2s" begin="-3.0s" repeatCount="indefinite"/>
+      <g>
+        <animateTransform attributeName="transform" type="rotate" values="-7;7;-7"
+          dur="2.6s" begin="-1.4s" repeatCount="indefinite"/>
+        <path d="M0 26q-4-3-4-7 0-3 4-3t4 3q0 4-4 7Z" fill="#8fb8e0" opacity=".75"
+              transform="scale(0.90)"/>
+        <ellipse cx="0" cy="0" rx="11.7" ry="14.4" fill="#8fb8e0"/>
+        <ellipse cx="-3.6" cy="-4.5" rx="3.1" ry="4.1"
+                 fill="#ffffff" opacity=".45"/>
+        <path d="M0 14.4q3 8-2 14t2 12" stroke="#8fb8e0" stroke-opacity=".55"
+              stroke-width="1.4" fill="none"/>
+      </g>
+    </g>
+  </g>
+</svg>

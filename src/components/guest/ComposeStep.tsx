@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import StepShell from './StepShell';
 import { sparkleAt } from '@/lib/confetti';
 import { cn } from '@/lib/utils';
+import { LIMITS } from '@/lib/env';
 import type { Theme } from '@/lib/themes';
 import type { AssetLibrary, GuestAsset } from '@/lib/types';
 
@@ -15,18 +16,25 @@ interface Props {
   assets: AssetLibrary;
   message: string;
   charLimit: number;
-  sticker: string | null;
-  gif: string | null;
-  meme: string | null;
+  stickers: string[];
+  gifs: string[];
+  memes: string[];
   onMessageChange: (value: string) => void;
-  onStickerChange: (value: string | null) => void;
-  onGifChange: (value: string | null) => void;
-  onMemeChange: (value: string | null) => void;
+  onStickersChange: (value: string[]) => void;
+  onGifsChange: (value: string[]) => void;
+  onMemesChange: (value: string[]) => void;
   onContinue: () => void;
   onBack: () => void;
 }
 
 type Tab = 'stickers' | 'gifs' | 'memes';
+
+/** How many of each a wish may carry, so a card stays readable. */
+const MAX: Record<Tab, number> = {
+  stickers: LIMITS.maxStickers,
+  gifs: LIMITS.maxGifs,
+  memes: LIMITS.maxMemes,
+};
 
 const PROMPTS = [
   'Wishing you a lifetime of happiness',
@@ -40,13 +48,13 @@ export default function ComposeStep({
   assets,
   message,
   charLimit,
-  sticker,
-  gif,
-  meme,
+  stickers,
+  gifs,
+  memes,
   onMessageChange,
-  onStickerChange,
-  onGifChange,
-  onMemeChange,
+  onStickersChange,
+  onGifsChange,
+  onMemesChange,
   onContinue,
   onBack,
 }: Props) {
@@ -69,18 +77,36 @@ export default function ComposeStep({
   const canContinue = message.trim().length > 0;
   const activeItems = tabs.find((entry) => entry.id === tab)?.items ?? [];
 
-  const selectedFor = (type: Tab) => (type === 'stickers' ? sticker : type === 'gifs' ? gif : meme);
+  const chosenFor = (type: Tab) => (type === 'stickers' ? stickers : type === 'gifs' ? gifs : memes);
 
+  const setFor = (type: Tab, next: string[]) => {
+    if (type === 'stickers') onStickersChange(next);
+    else if (type === 'gifs') onGifsChange(next);
+    else onMemesChange(next);
+  };
+
+  const activeChosen = chosenFor(tab);
+  const atLimit = activeChosen.length >= MAX[tab];
+  const totalChosen = stickers.length + gifs.length + memes.length;
+
+  /**
+   * Tapping a chosen item removes it; tapping a new one adds it, up to the cap.
+   * At the cap the remaining tiles go visibly disabled rather than swallowing
+   * the tap — a guest who cannot tell the difference assumes it is broken.
+   */
   const choose = (type: Tab, asset: GuestAsset, event: React.MouseEvent) => {
     const value = asset.emoji ?? asset.url;
     if (!value) return;
-    const next = selectedFor(type) === value ? null : value;
 
-    if (type === 'stickers') onStickerChange(next);
-    if (type === 'gifs') onGifChange(next);
-    if (type === 'memes') onMemeChange(next);
+    const current = chosenFor(type);
+    if (current.includes(value)) {
+      setFor(type, current.filter((entry) => entry !== value));
+      return;
+    }
+    if (current.length >= MAX[type]) return;
 
-    if (next) sparkleAt(event.clientX, event.clientY, theme.confetti);
+    setFor(type, [...current, value]);
+    sparkleAt(event.clientX, event.clientY, theme.confetti);
   };
 
   return (
@@ -152,15 +178,18 @@ export default function ComposeStep({
           <section>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[0.82rem] font-medium tracking-wide text-[var(--ink-soft)]">
-                Add some fun <span className="opacity-70">(optional)</span>
+                Add some fun{' '}
+                <span className="opacity-70">
+                  {totalChosen > 0 ? `(${totalChosen} added)` : '(optional \u2014 pick a few)'}
+                </span>
               </h2>
-              {(sticker || gif || meme) && (
+              {totalChosen > 0 && (
                 <button
                   type="button"
                   onClick={() => {
-                    onStickerChange(null);
-                    onGifChange(null);
-                    onMemeChange(null);
+                    onStickersChange([]);
+                    onGifsChange([]);
+                    onMemesChange([]);
                   }}
                   className="text-[0.75rem] text-[var(--ink-soft)] underline underline-offset-2"
                 >
@@ -191,11 +220,17 @@ export default function ComposeStep({
                     />
                   )}
                   {entry.label}
-                  {selectedFor(entry.id) && (
+                  {chosenFor(entry.id).length > 0 && (
                     <span
-                      className="ml-1.5 inline-block size-1.5 rounded-full align-middle"
-                      style={{ background: tab === entry.id ? 'white' : 'var(--accent)' }}
-                    />
+                      className="ml-1.5 inline-flex min-w-4 items-center justify-center rounded-full px-1 align-middle text-[0.66rem] font-semibold leading-4"
+                      style={
+                        tab === entry.id
+                          ? { background: 'rgba(255,255,255,0.3)', color: 'white' }
+                          : { background: 'var(--accent)', color: 'white' }
+                      }
+                    >
+                      {chosenFor(entry.id).length}
+                    </span>
                   )}
                 </button>
               ))}
@@ -212,7 +247,8 @@ export default function ComposeStep({
             >
                 {activeItems.map((asset) => {
                   const value = asset.emoji ?? asset.url;
-                  const selected = value !== null && selectedFor(tab) === value;
+                  const selected = value !== null && activeChosen.includes(value);
+                  const blocked = !selected && atLimit;
 
                   return (
                     <button
@@ -220,12 +256,14 @@ export default function ComposeStep({
                       type="button"
                       onClick={(event) => choose(tab, asset, event)}
                       aria-pressed={selected}
-                      title={asset.name || undefined}
+                      disabled={blocked}
+                      title={blocked ? `Remove one first \u2014 up to ${MAX[tab]}` : asset.name || undefined}
                       className={cn(
                         'glass relative flex shrink-0 items-center justify-center overflow-hidden',
                         'transition-all duration-200 active:scale-95',
                         tab === 'stickers' ? 'size-16 rounded-2xl text-3xl' : 'h-24 w-24 rounded-2xl',
                         selected && 'ring-2 ring-offset-2 ring-offset-transparent',
+                        blocked && 'opacity-40',
                       )}
                       style={
                         selected
@@ -248,19 +286,13 @@ export default function ComposeStep({
                         )
                       )}
                       {selected && (
+                        // The number is the order it will appear in on the card.
                         <span
-                          className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full"
+                          className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white"
                           style={{ background: 'var(--accent)' }}
+                          aria-hidden
                         >
-                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" aria-hidden>
-                            <path
-                              d="m5 12.5 4.5 4.5L19 7"
-                              stroke="white"
-                              strokeWidth="3.4"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
+                          {activeChosen.indexOf(value as string) + 1}
                         </span>
                       )}
                     </button>

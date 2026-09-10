@@ -99,7 +99,8 @@ export default function WishTable({ eventId, wishes }: Props) {
       ) : (
         <ul className="divide-y divide-[var(--card-line)]">
           {visible.map((wish) => {
-            const media = wish.gif ?? wish.meme;
+            const media = [...wish.gifs, ...wish.memes];
+            const emoji = wish.stickers.find((value) => !value.startsWith('/'));
             const isBusy = pending && busyId === wish.id;
 
             return (
@@ -120,7 +121,7 @@ export default function WishTable({ eventId, wishes }: Props) {
                   />
                 ) : (
                   <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-cocoa-50 text-lg">
-                    {wish.sticker && !wish.sticker.startsWith('/') ? wish.sticker : '💌'}
+                    {emoji ?? '💌'}
                   </span>
                 )}
 
@@ -139,11 +140,12 @@ export default function WishTable({ eventId, wishes }: Props) {
                         <span>preloaded</span>
                       </>
                     )}
-                    {media && (
-                      <span className="relative ml-1 inline-block size-6 align-middle">
-                        <Image src={media} alt="" fill sizes="24px" className="object-contain" unoptimized />
+                    {media.map((src) => (
+                      <span key={src} className="relative ml-1 inline-block size-6 align-middle">
+                        <Image src={src} alt="" fill sizes="24px" className="object-contain" unoptimized />
                       </span>
-                    )}
+                    ))}
+                    {wish.stickers.length > 1 && <span>{wish.stickers.length} stickers</span>}
                   </div>
                 </div>
 

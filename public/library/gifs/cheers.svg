@@ -1,34 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img">
-<style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Cheers">
 
-  @keyframes bob   { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
-  @keyframes rise  { 0% { transform: translateY(10px); opacity: .55 } 50% { opacity: 1 } 100% { transform: translateY(-16px); opacity: .2 } }
-  @keyframes tw    { 0%,100% { opacity: .55; transform: scale(.9) } 50% { opacity: 1; transform: scale(1.15) } }
-  @keyframes sway  { 0%,100% { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } }
-  @keyframes drift { 0% { transform: translateY(-6px) rotate(-8deg) } 100% { transform: translateY(10px) rotate(8deg) } }
-  @keyframes pop   { 0%,100% { transform: scale(1) } 45% { transform: scale(1.1) } }
-
-  .bob   { animation: bob 3.2s ease-in-out infinite; transform-origin: center }
-  .rise  { animation: rise 2.8s ease-in-out infinite; transform-origin: center }
-  .tw    { animation: tw 2.1s ease-in-out infinite; transform-origin: center }
-  .sway  { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 90% }
-  .drift { animation: drift 3.4s ease-in-out infinite alternate; transform-origin: center }
-  .pop   { animation: pop 2.4s ease-in-out infinite; transform-origin: center }
-
-  /* Motion is decoration; the composition above already reads without it. */
-  @media (prefers-reduced-motion: reduce) {
-    .bob, .rise, .tw, .sway, .drift, .pop { animation: none }
-  }
-</style>
-
-  <g class="sway">
-    <path d="M30 28h26l-9 26v22h9v6H21v-6h9V54l-9-26Z" fill="#f4e3c0"/>
-    <path d="M32 32h22l-5 15H37l-5-15Z" fill="#e8a8bf"/>
+  <g transform="translate(44 72)">
+    <g transform="rotate(0)">
+      <animateTransform attributeName="transform" type="rotate" values="-16;6;-16"
+        dur="2.4s" repeatCount="indefinite" calcMode="spline"
+        keySplines="0.4 0 0.5 1; 0.4 0 0.5 1" keyTimes="0;0.5;1"/>
+      <path d="M-13 -40h26l-4 18a9 9 0 0 1-18 0Z" fill="#f6d9a0" stroke="#c9922f" stroke-width="1.6"/>
+      <path d="M0 -22v20" stroke="#c9922f" stroke-width="2.2"/>
+      <path d="M-8 2h16" stroke="#c9922f" stroke-width="2.6" stroke-linecap="round"/>
+    </g>
   </g>
-  <g class="sway" style="animation-delay:.6s">
-    <path d="M64 28h26l-9 26v22h9v6H55v-6h9V54l-9-26Z" fill="#f8ecd6"/>
-    <path d="M66 32h22l-5 15H71l-5-15Z" fill="#f2bcce"/>
+  <g transform="translate(76 72)">
+    <g>
+      <animateTransform attributeName="transform" type="rotate" values="16;-6;16"
+        dur="2.4s" repeatCount="indefinite" calcMode="spline"
+        keySplines="0.4 0 0.5 1; 0.4 0 0.5 1" keyTimes="0;0.5;1"/>
+      <path d="M-13 -40h26l-4 18a9 9 0 0 1-18 0Z" fill="#f6d9a0" stroke="#c9922f" stroke-width="1.6"/>
+      <path d="M0 -22v20" stroke="#c9922f" stroke-width="2.2"/>
+      <path d="M-8 2h16" stroke="#c9922f" stroke-width="2.6" stroke-linecap="round"/>
+    </g>
   </g>
-  <g class="tw"><path transform="translate(50 4) scale(0.75)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#dcb463"/></g>
-  <g class="tw" style="animation-delay:.7s"><path transform="translate(86 12) scale(0.5416666666666666)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#e8cb8e"/></g>
+  <g transform="translate(60 26)">
+    <path d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" transform="translate(-8 -8) scale(0.66)" fill="#fff0c2">
+      <animate attributeName="opacity" values="0;0;1;0" keyTimes="0;0.42;0.52;0.7"
+        dur="2.4s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="scale" values="0.5;1.25;0.5"
+        dur="2.4s" repeatCount="indefinite" additive="sum"/>
+    </path>
+  </g>
+  <circle cx="46" cy="20" r="2.4" fill="#f0d9a4">
+    <animate attributeName="opacity" values="0;1;0" keyTimes="0;0.5;0.8" dur="2.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="76" cy="18" r="2" fill="#f0d9a4">
+    <animate attributeName="opacity" values="0;1;0" keyTimes="0;0.55;0.85" dur="2.4s" repeatCount="indefinite"/>
+  </circle>
 </svg>

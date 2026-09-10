@@ -1,34 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" width="200" height="160" role="img">
-<style>
-
-  @keyframes bob   { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
-  @keyframes rise  { 0% { transform: translateY(10px); opacity: .55 } 50% { opacity: 1 } 100% { transform: translateY(-16px); opacity: .2 } }
-  @keyframes tw    { 0%,100% { opacity: .55; transform: scale(.9) } 50% { opacity: 1; transform: scale(1.15) } }
-  @keyframes sway  { 0%,100% { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } }
-  @keyframes drift { 0% { transform: translateY(-6px) rotate(-8deg) } 100% { transform: translateY(10px) rotate(8deg) } }
-  @keyframes pop   { 0%,100% { transform: scale(1) } 45% { transform: scale(1.1) } }
-
-  .bob   { animation: bob 3.2s ease-in-out infinite; transform-origin: center }
-  .rise  { animation: rise 2.8s ease-in-out infinite; transform-origin: center }
-  .tw    { animation: tw 2.1s ease-in-out infinite; transform-origin: center }
-  .sway  { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 90% }
-  .drift { animation: drift 3.4s ease-in-out infinite alternate; transform-origin: center }
-  .pop   { animation: pop 2.4s ease-in-out infinite; transform-origin: center }
-
-  /* Motion is decoration; the composition above already reads without it. */
-  @media (prefers-reduced-motion: reduce) {
-    .bob, .rise, .tw, .sway, .drift, .pop { animation: none }
-  }
-</style>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" width="200" height="160" role="img" aria-label="See you on the floor">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#e8dcff"/>
+      <stop offset="0%" stop-color="#fff2e4"/>
       <stop offset="100%" stop-color="#ffffff"/>
     </linearGradient>
   </defs>
-  <rect x="4" y="4" width="192" height="152" rx="18" fill="url(#g)" stroke="#8b6ab8" stroke-opacity=".35" stroke-width="2"/>
-  <text x="100" y="34" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#8b6ab8" letter-spacing="2">SEE YOU LATER</text>
-  <text x="100" y="96" text-anchor="middle" font-size="46" class="pop">💃</text>
+  <rect x="4" y="4" width="192" height="152" rx="18" fill="url(#g)" stroke="#c97b62" stroke-opacity=".35" stroke-width="2"/>
+  <text x="100" y="34" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#c97b62" letter-spacing="2">SEE YOU LATER</text>
+  <g transform="translate(100 82)">
+    <text x="0" y="14" text-anchor="middle" font-size="46" aria-hidden="true">&#128131;<animateTransform attributeName="transform" type="rotate" values="-8;8;-8" dur="1.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" keyTimes="0;0.5;1"/></text>
+  </g>
   <text x="100" y="132" text-anchor="middle" font-family="Georgia, serif" font-size="15" font-style="italic" fill="#5c4237">On the dance floor</text>
 </svg>

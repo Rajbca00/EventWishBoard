@@ -61,6 +61,19 @@ export function shapeEvent(row: EventRow): CelebrationEvent {
 }
 
 /**
+ * Reads a decoration list, falling back to the single legacy column.
+ *
+ * A database without migration 0004 has no array columns at all, and rows
+ * written before it ran have empty ones — either way the singular column still
+ * holds the guest's choice, so it is the fallback rather than a special case.
+ */
+function decorations(list: string[] | null | undefined, legacy: string | null): string[] {
+  const values = (list ?? []).filter((value) => typeof value === 'string' && value.length > 0);
+  if (values.length) return values;
+  return legacy ? [legacy] : [];
+}
+
+/**
  * Public shape. `selfieUrl` is only ever populated when the organiser has
  * explicitly opted into showing guest photos on the wall.
  */
@@ -69,9 +82,9 @@ export function shapePublicWish(row: WishRow, selfieUrl: string | null = null): 
     id: row.id,
     message: row.message,
     name: row.is_anonymous ? null : row.guest_name,
-    sticker: row.sticker,
-    gif: row.gif,
-    meme: row.meme,
+    stickers: decorations(row.stickers, row.sticker),
+    gifs: decorations(row.gifs, row.gif),
+    memes: decorations(row.memes, row.meme),
     selfieUrl,
     featured: row.is_featured,
     createdAt: row.created_at,
