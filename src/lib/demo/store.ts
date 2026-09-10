@@ -31,6 +31,18 @@ const EMOJI_STICKERS: [string, string][] = [
   ['🌟', 'Star'],
   ['🧁', 'Sweetness'],
   ['🎀', 'Ribbon'],
+  ['🎊', 'Party popper'],
+  ['🌸', 'Blossom'],
+  ['🕊️', 'Peace'],
+  ['💖', 'Beating heart'],
+  ['🍰', 'A slice'],
+  ['🥳', 'Party face'],
+  ['👏', 'Applause'],
+  ['🫶', 'Heart hands'],
+  ['🌙', 'Moonlight'],
+  ['🦋', 'Butterfly'],
+  ['🍾', 'Pop the cork'],
+  ['💫', 'Dizzy'],
 ];
 
 const DEFAULT_GIFS: [string, string][] = [
@@ -39,6 +51,12 @@ const DEFAULT_GIFS: [string, string][] = [
   ['/library/gifs/cheers.svg', 'Cheers!'],
   ['/library/gifs/sparkle.svg', 'Sparkle'],
   ['/library/gifs/cake.svg', 'Happy cake'],
+  ['/library/gifs/balloons.svg', 'Balloons rising'],
+  ['/library/gifs/rings.svg', 'Rings'],
+  ['/library/gifs/fireworks.svg', 'Fireworks'],
+  ['/library/gifs/cupcake.svg', 'Cupcake wink'],
+  ['/library/gifs/dancing.svg', 'Dance floor'],
+  ['/library/gifs/love-letter.svg', 'Love letter'],
 ];
 
 const DEFAULT_MEMES: [string, string][] = [
@@ -46,13 +64,32 @@ const DEFAULT_MEMES: [string, string][] = [
   ['/library/memes/finally.svg', 'Finally!'],
   ['/library/memes/dessert.svg', 'Here for dessert'],
   ['/library/memes/dance.svg', 'See you on the floor'],
+  ['/library/memes/cake-boss.svg', 'Cake boss'],
+  ['/library/memes/plus-one.svg', 'Here for the cake'],
+  ['/library/memes/crying.svg', 'Not crying'],
+  ['/library/memes/photobomb.svg', 'Photobomb'],
 ];
 
-const PRELOADED = [
-  'Wishing you a lifetime of happiness ❤️',
-  "Here's to forever! 🥂",
-  'May your journey together always be filled with laughter ✨',
-  'May every chapter be better than the last.',
+/** Starter wishes for a wedding wall. */
+const PRELOADED: [string, string[]][] = [
+  ['Wishing you a lifetime of happiness ❤️', ['❤️']],
+  ["Here's to forever! 🥂", ['🥂', '💍']],
+  ['May your journey together always be filled with laughter ✨', ['✨']],
+  ['May every chapter be better than the last.', []],
+  ['Two hearts, one adventure. Enjoy every mile of it 🫶', ['🫶', '🦋']],
+  ['May your home always smell of something baking 🧁', ['🧁', '🍰']],
+  ['Wishing you slow mornings and long, loud dinners 🌸', ['🌸']],
+  ['To the couple who make everyone else believe in it 💖', ['💖', '🕊️']],
+  ['Congratulations! Now the real fun begins 🎊', ['🎊', '🥳']],
+];
+
+/** And for a birthday one — the same wall, a different occasion. */
+const PRELOADED_BIRTHDAY: [string, string[]][] = [
+  ['Happy birthday! Make a wish and mean it 🎂', ['🎂']],
+  ['Another year of being completely, brilliantly you 🥳', ['🥳', '💫']],
+  ['May this year bring you every good thing 🌟', ['🌟']],
+  ['Cake first. Everything else after 🍰', ['🍰', '🍾']],
+  ['So glad you were born. Truly 🎈', ['👏']],
 ];
 
 function iso(offsetMinutes = 0): string {
@@ -135,23 +172,36 @@ function seed(): DemoData {
     })),
   ];
 
-  const wishes: WishRow[] = PRELOADED.map((message, index) => ({
-    id: randomUUID(),
-    event_id: eventId,
-    message,
-    guest_name: null,
-    is_anonymous: true,
-    sticker: index === 0 ? '❤️' : index === 1 ? '🥂' : null,
-    gif: null,
-    meme: null,
-    selfie_path: null,
-    selfie_public: false,
-    status: 'approved' as const,
-    is_featured: false,
-    is_preloaded: true,
-    ip_hash: null,
-    created_at: iso(60 * (index + 2)),
-  }));
+  const preloaded = (
+    forEvent: string,
+    entries: [string, string[]][],
+    offsetMinutes: number,
+  ): WishRow[] =>
+    entries.map(([message, stickers], index) => ({
+      id: randomUUID(),
+      event_id: forEvent,
+      message,
+      guest_name: null,
+      is_anonymous: true,
+      sticker: stickers[0] ?? null,
+      gif: null,
+      meme: null,
+      stickers,
+      gifs: [],
+      memes: [],
+      selfie_path: null,
+      selfie_public: false,
+      status: 'approved' as const,
+      is_featured: false,
+      is_preloaded: true,
+      ip_hash: null,
+      created_at: iso(offsetMinutes + 60 * (index + 2)),
+    }));
+
+  const wishes: WishRow[] = [
+    ...preloaded(eventId, PRELOADED, 0),
+    ...preloaded('ananya-birthday-001', PRELOADED_BIRTHDAY, 30),
+  ];
 
   wishes.push(
     {
@@ -161,8 +211,11 @@ function seed(): DemoData {
       guest_name: 'Meera',
       is_anonymous: false,
       sticker: '💕',
-      gif: null,
+      gif: '/library/gifs/hearts.svg',
       meme: null,
+      stickers: ['💕', '🫶', '🌸'],
+      gifs: ['/library/gifs/hearts.svg'],
+      memes: [],
       selfie_path: null,
       selfie_public: false,
       status: 'approved',
@@ -177,9 +230,12 @@ function seed(): DemoData {
       message: 'Congratulations! Save me a slice of that cake 🧁',
       guest_name: null,
       is_anonymous: true,
-      sticker: null,
+      sticker: '🍰',
       gif: '/library/gifs/cake.svg',
       meme: null,
+      stickers: ['🍰'],
+      gifs: ['/library/gifs/cake.svg', '/library/gifs/cupcake.svg'],
+      memes: [],
       selfie_path: null,
       selfie_public: false,
       status: 'approved',
@@ -195,8 +251,11 @@ function seed(): DemoData {
       guest_name: 'Rajesh',
       is_anonymous: false,
       sticker: '✨',
-      gif: null,
+      gif: '/library/gifs/fireworks.svg',
       meme: '/library/memes/best-couple.svg',
+      stickers: ['✨', '🍾'],
+      gifs: ['/library/gifs/fireworks.svg'],
+      memes: ['/library/memes/best-couple.svg', '/library/memes/plus-one.svg'],
       selfie_path: null,
       selfie_public: false,
       status: 'approved',

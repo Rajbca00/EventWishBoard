@@ -159,9 +159,12 @@ export async function submitGuestWish(
       message,
       guest_name: guestName,
       is_anonymous: isAnonymous,
-      sticker: submission.sticker ?? null,
-      gif: submission.gif ?? null,
-      meme: submission.meme ?? null,
+      sticker: submission.stickers[0] ?? null,
+      gif: submission.gifs[0] ?? null,
+      meme: submission.memes[0] ?? null,
+      stickers: submission.stickers,
+      gifs: submission.gifs,
+      memes: submission.memes,
       selfie_path: wantsSelfie ? (submission.selfie ?? null) : null,
       selfie_public: selfiePublic,
       status,
@@ -184,9 +187,14 @@ export async function submitGuestWish(
     message,
     guest_name: guestName,
     is_anonymous: isAnonymous,
-    sticker: submission.sticker ?? null,
-    gif: submission.gif ?? null,
-    meme: submission.meme ?? null,
+    // The singular columns mirror the first of each list. See migration 0004:
+    // they exist so a deploy that lands before the migration still works.
+    sticker: submission.stickers[0] ?? null,
+    gif: submission.gifs[0] ?? null,
+    meme: submission.memes[0] ?? null,
+    stickers: submission.stickers,
+    gifs: submission.gifs,
+    memes: submission.memes,
     selfie_path: selfiePath,
     selfie_public: selfiePublic,
     status,
@@ -215,6 +223,25 @@ export async function submitGuestWish(
     ({ data, error } = await insert(row));
   }
 
+  /*
+   * Same reasoning for the decoration lists. Without 0004 the wish still saves
+   * with the guest's first sticker, GIF and meme, because the singular columns
+   * above carry them; only the extras are lost, which beats refusing the wish.
+   */
+  const missingList = (['stickers', 'gifs', 'memes'] as const).find((column) =>
+    isMissingColumn(error, column),
+  );
+  if (error && missingList) {
+    console.warn(
+      `[wish] wishes.${missingList} is missing — run supabase/migrations/0004_multi_decorations.sql. ` +
+        'Saving this wish with only the first sticker, GIF and meme.',
+    );
+    delete row.stickers;
+    delete row.gifs;
+    delete row.memes;
+    ({ data, error } = await insert(row));
+  }
+
   if (error || !data) {
     if (selfiePath) await deleteSelfie(selfiePath);
     throw new Error(error?.message ?? 'The wish could not be saved');
@@ -227,9 +254,17 @@ export async function submitGuestWish(
 
 export async function createPreloadedWish(
   eventId: string,
-  input: { message: string; guestName?: string; isAnonymous?: boolean; sticker?: string | null },
+  input: {
+    message: string;
+    guestName?: string;
+    isAnonymous?: boolean;
+    sticker?: string | null;
+    stickers?: string[];
+  },
 ): Promise<AdminWish> {
   const isAnonymous = input.isAnonymous ?? true;
+  const stickers = [...new Set([...(input.stickers ?? []), ...(input.sticker ? [input.sticker] : [])])]
+    .slice(0, LIMITS.maxStickers);
 
   if (demo()) {
     const row: WishRow = {
@@ -238,9 +273,12 @@ export async function createPreloadedWish(
       message: sanitizeText(input.message, LIMITS.wishChars),
       guest_name: isAnonymous ? null : sanitizeText(input.guestName, LIMITS.nameChars) || null,
       is_anonymous: isAnonymous,
-      sticker: input.sticker ?? null,
+      sticker: stickers[0] ?? null,
       gif: null,
       meme: null,
+      stickers,
+      gifs: [],
+      memes: [],
       selfie_path: null,
       selfie_public: false,
       status: 'approved',
@@ -260,12 +298,33 @@ export async function createPreloadedWish(
       message: sanitizeText(input.message, LIMITS.wishChars),
       guest_name: isAnonymous ? null : sanitizeText(input.guestName, LIMITS.nameChars) || null,
       is_anonymous: isAnonymous,
-      sticker: input.sticker ?? null,
+      sticker: stickers[0] ?? null,
+      stickers,
       status: 'approved',
       is_preloaded: true,
     })
     .select('*')
     .single<WishRow>();
+
+  // Without migration 0004 the list column does not exist; the first sticker
+  // still lands in the singular column, so save the wish rather than refuse it.
+  if (error && isMissingColumn(error, 'stickers')) {
+    const retry = await supabaseAdmin()
+      .from('wishes')
+      .insert({
+        event_id: eventId,
+        message: sanitizeText(input.message, LIMITS.wishChars),
+        guest_name: isAnonymous ? null : sanitizeText(input.guestName, LIMITS.nameChars) || null,
+        is_anonymous: isAnonymous,
+        sticker: stickers[0] ?? null,
+        status: 'approved',
+        is_preloaded: true,
+      })
+      .select('*')
+      .single<WishRow>();
+    if (retry.error) throw new Error(retry.error.message);
+    return shapeAdminWish(retry.data);
+  }
 
   if (error) throw new Error(error.message);
   return shapeAdminWish(data);
@@ -426,7 +485,7 @@ export async function exportWishesCsv(eventId: string): Promise<string> {
   const escape = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
   const header = [
-    'id', 'message', 'name', 'anonymous', 'sticker', 'gif', 'meme',
+    'id', 'message', 'name', 'anonymous', 'stickers', 'gifs', 'memes',
     'has_selfie', 'status', 'featured', 'preloaded', 'created_at',
   ];
 
@@ -436,9 +495,9 @@ export async function exportWishesCsv(eventId: string): Promise<string> {
       wish.message,
       wish.isAnonymous ? 'Anonymous' : (wish.guestName ?? ''),
       wish.isAnonymous ? 'yes' : 'no',
-      wish.sticker ?? '',
-      wish.gif ?? '',
-      wish.meme ?? '',
+      wish.stickers.join(' '),
+      wish.gifs.join(' '),
+      wish.memes.join(' '),
       wish.hasSelfie ? 'yes' : 'no',
       wish.status,
       wish.featured ? 'yes' : 'no',

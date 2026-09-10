@@ -53,9 +53,17 @@ export interface WishRow {
   message: string;
   guest_name: string | null;
   is_anonymous: boolean;
+  /**
+   * Kept in sync with the first element of the matching list below, so that a
+   * build running against a database without migration 0004 still works.
+   */
   sticker: string | null;
   gif: string | null;
   meme: string | null;
+  /** Optional: absent on a database that has not had 0004 applied. */
+  stickers?: string[] | null;
+  gifs?: string[] | null;
+  memes?: string[] | null;
   selfie_path: string | null;
   /** The guest chose to show this photo on the public wall. */
   selfie_public: boolean;
@@ -115,9 +123,10 @@ export interface PublicWish {
   id: string;
   message: string;
   name: string | null;
-  sticker: string | null;
-  gif: string | null;
-  meme: string | null;
+  /** Emoji or image URLs, in the order the guest picked them. */
+  stickers: string[];
+  gifs: string[];
+  memes: string[];
   selfieUrl: string | null;
   featured: boolean;
   createdAt: string;
@@ -212,9 +221,9 @@ export interface WishDraft {
   message: string;
   guestName: string;
   isAnonymous: boolean;
-  sticker: string | null;
-  gif: string | null;
-  meme: string | null;
+  stickers: string[];
+  gifs: string[];
+  memes: string[];
   /** Base64 data URL, compressed in the browser before it is sent. */
   selfie: string | null;
   /** Guest's choice: show the photo on the wall, or keep it for the hosts. */

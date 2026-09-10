@@ -1,31 +1,98 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img">
-<style>
-
-  @keyframes bob   { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
-  @keyframes rise  { 0% { transform: translateY(10px); opacity: .55 } 50% { opacity: 1 } 100% { transform: translateY(-16px); opacity: .2 } }
-  @keyframes tw    { 0%,100% { opacity: .55; transform: scale(.9) } 50% { opacity: 1; transform: scale(1.15) } }
-  @keyframes sway  { 0%,100% { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } }
-  @keyframes drift { 0% { transform: translateY(-6px) rotate(-8deg) } 100% { transform: translateY(10px) rotate(8deg) } }
-  @keyframes pop   { 0%,100% { transform: scale(1) } 45% { transform: scale(1.1) } }
-
-  .bob   { animation: bob 3.2s ease-in-out infinite; transform-origin: center }
-  .rise  { animation: rise 2.8s ease-in-out infinite; transform-origin: center }
-  .tw    { animation: tw 2.1s ease-in-out infinite; transform-origin: center }
-  .sway  { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 90% }
-  .drift { animation: drift 3.4s ease-in-out infinite alternate; transform-origin: center }
-  .pop   { animation: pop 2.4s ease-in-out infinite; transform-origin: center }
-
-  /* Motion is decoration; the composition above already reads without it. */
-  @media (prefers-reduced-motion: reduce) {
-    .bob, .rise, .tw, .sway, .drift, .pop { animation: none }
-  }
-</style>
-
-  <g class="drift"><rect x="20" y="30" width="7" height="15" rx="3.5" fill="#d4738f" transform="rotate(-20 23.5 37.5)"/></g>
-  <g class="drift" style="animation-delay:.4s"><rect x="44" y="18" width="7" height="15" rx="3.5" fill="#dcb463" transform="rotate(25 47.5 25.5)"/></g>
-  <g class="drift" style="animation-delay:.8s"><rect x="68" y="34" width="7" height="15" rx="3.5" fill="#a99bea" transform="rotate(-10 71.5 41.5)"/></g>
-  <g class="drift" style="animation-delay:1.2s"><rect x="88" y="22" width="7" height="15" rx="3.5" fill="#7fb2e5" transform="rotate(35 91.5 29.5)"/></g>
-  <g class="drift" style="animation-delay:1.6s"><rect x="32" y="70" width="7" height="15" rx="3.5" fill="#e07a5f" transform="rotate(15 35.5 77.5)"/></g>
-  <g class="drift" style="animation-delay:2s"><rect x="60" y="78" width="7" height="15" rx="3.5" fill="#f2a5bd" transform="rotate(-30 63.5 85.5)"/></g>
-  <g class="tw"><path transform="translate(48 44) scale(1.0833333333333333)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#f0d9a4"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Confetti burst">
+  <g transform="translate(12 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 -16; 0 126"
+        dur="2.6s" begin="-0.0s" repeatCount="indefinite"/>
+      <rect x="-2.5" y="-4.5" width="5" height="9" rx="1.5" fill="#e5789c">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="-360"
+          dur="1.56s" begin="-0.0s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.8;1"
+          dur="2.6s" begin="-0.0s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+  <g transform="translate(25 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 -16; 0 126"
+        dur="3.1s" begin="-0.42s" repeatCount="indefinite"/>
+      <rect x="-3.5" y="-3.5" width="7" height="7" rx="1.5" fill="#f0c96b">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+          dur="1.86s" begin="-0.42s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.8;1"
+          dur="3.1s" begin="-0.42s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+  <g transform="translate(38 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 -16; 0 126"
+        dur="3.6s" begin="-0.84s" repeatCount="indefinite"/>
+      <rect x="-2.5" y="-4.5" width="5" height="9" rx="1.5" fill="#7fbfa8">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="-360"
+          dur="2.16s" begin="-0.84s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.8;1"
+          dur="3.6s" begin="-0.84s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+  <g transform="translate(51 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 -16; 0 126"
+        dur="2.6s" begin="-1.26s" repeatCount="indefinite"/>
+      <rect x="-3.5" y="-3.5" width="7" height="7" rx="1.5" fill="#b98ad4">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+          dur="1.56s" begin="-1.26s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.8;1"
+          dur="2.6s" begin="-1.26s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+  <g transform="translate(64 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 -16; 0 126"
+        dur="3.1s" begin="-1.68s" repeatCount="indefinite"/>
+      <rect x="-2.5" y="-4.5" width="5" height="9" rx="1.5" fill="#f2a5bd">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="-360"
+          dur="1.86s" begin="-1.68s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.8;1"
+          dur="3.1s" begin="-1.68s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+  <g transform="translate(77 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 -16; 0 126"
+        dur="3.6s" begin="-2.1s" repeatCount="indefinite"/>
+      <rect x="-3.5" y="-3.5" width="7" height="7" rx="1.5" fill="#e8b04b">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+          dur="2.16s" begin="-2.1s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.8;1"
+          dur="3.6s" begin="-2.1s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+  <g transform="translate(90 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 -16; 0 126"
+        dur="2.6s" begin="-2.52s" repeatCount="indefinite"/>
+      <rect x="-2.5" y="-4.5" width="5" height="9" rx="1.5" fill="#6fa8dc">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="-360"
+          dur="1.56s" begin="-2.52s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.8;1"
+          dur="2.6s" begin="-2.52s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
+  <g transform="translate(103 0)">
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 -16; 0 126"
+        dur="3.1s" begin="-2.94s" repeatCount="indefinite"/>
+      <rect x="-3.5" y="-3.5" width="7" height="7" rx="1.5" fill="#d95f83">
+        <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+          dur="1.86s" begin="-2.94s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.12;0.8;1"
+          dur="3.1s" begin="-2.94s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+  </g>
 </svg>

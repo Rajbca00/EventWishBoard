@@ -88,6 +88,14 @@ export const LIMITS = {
   wishChars: 300,
   nameChars: 40,
   /**
+   * How many decorations one wish may carry. A card has to stay readable from
+   * across a room, and a row of nine stickers stops being a wish and starts
+   * being a keyboard.
+   */
+  maxStickers: 4,
+  maxGifs: 2,
+  maxMemes: 2,
+  /**
    * Decoded bytes, and the real ceiling — the browser aims for under 1 MB, and
    * this rejects anything larger whether it came from our composer or not.
    * The headroom above 1 MB is only so a legitimately borderline photo is not

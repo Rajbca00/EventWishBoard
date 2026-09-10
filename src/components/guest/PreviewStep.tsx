@@ -73,9 +73,9 @@ export default function PreviewStep({
             wish={{
               message: draft.message,
               name,
-              sticker: draft.sticker,
-              gif: draft.gif,
-              meme: draft.meme,
+              stickers: draft.stickers,
+              gifs: draft.gifs,
+              memes: draft.memes,
               selfieUrl: draft.selfie,
             }}
             variant="preview"

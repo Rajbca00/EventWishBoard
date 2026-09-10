@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Fireworks">
+  <g transform="translate(44 44)">
+    <g>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.6;1"
+        dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(0)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(36)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(72)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(108)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(144)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(180)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(216)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(252)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(288)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#f0c96b" stroke-width="2.4" stroke-linecap="round" transform="rotate(324)">
+      <animate attributeName="y2" values="-4;-20" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.2s" begin="0s" repeatCount="indefinite"/>
+    </line>
+    </g>
+  </g>
+  <g transform="translate(78 62)">
+    <g>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.6;1"
+        dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(0)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(36)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(72)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(108)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(144)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(180)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(216)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(252)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(288)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#e5789c" stroke-width="2.4" stroke-linecap="round" transform="rotate(324)">
+      <animate attributeName="y2" values="-4;-20" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.6s" begin="-1.1s" repeatCount="indefinite"/>
+    </line>
+    </g>
+  </g>
+  <g transform="translate(58 82)">
+    <g>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.6;1"
+        dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(0)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(36)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(72)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(108)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(144)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(180)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(216)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(252)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(288)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="-4" stroke="#8fb8e0" stroke-width="2.4" stroke-linecap="round" transform="rotate(324)">
+      <animate attributeName="y2" values="-4;-20" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y1" values="-2;-15" dur="2.4s" begin="-0.6s" repeatCount="indefinite"/>
+    </line>
+    </g>
+  </g>
+</svg>

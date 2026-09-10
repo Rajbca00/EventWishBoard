@@ -4,7 +4,7 @@ import { supabaseAdmin } from '../supabase/admin';
 import { isSupabaseConfigured } from '../env';
 import { demoData } from '../demo/store';
 import { signSelfies } from '../images';
-import { isMissingColumn, shapeEvent } from './shape';
+import { isMissingColumn, shapeEvent, shapePublicWish } from './shape';
 import type { CelebrationEvent, EventRow, WishRow } from '../types';
 
 const demo = () => !isSupabaseConfigured();
@@ -17,8 +17,10 @@ export interface BookWish {
   id: string;
   message: string;
   name: string | null;
-  sticker: string | null;
-  media: string | null;
+  /** Emoji or image URLs, in the order the guest picked them. */
+  stickers: string[];
+  /** Every GIF and meme on the wish, GIFs first. */
+  media: string[];
   /** Present for every guest photo — the book is the couple's private copy. */
   selfieUrl: string | null;
   featured: boolean;
@@ -112,12 +114,15 @@ export async function getBookToken(eventId: string): Promise<string | null> {
 /* ------------------------------------------------------------------ the book */
 
 function shapeBookWish(row: WishRow, selfieUrl: string | null): BookWish {
+  // shapePublicWish already reconciles the list columns with the older single
+  // ones, so the book reads the same on a database without migration 0004.
+  const shaped = shapePublicWish(row, selfieUrl);
   return {
     id: row.id,
     message: row.message,
     name: row.is_anonymous ? null : row.guest_name,
-    sticker: row.sticker,
-    media: row.gif ?? row.meme,
+    stickers: shaped.stickers,
+    media: [...shaped.gifs, ...shaped.memes],
     selfieUrl,
     featured: row.is_featured,
     createdAt: row.created_at,

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" width="200" height="160" role="img" aria-label="Cake boss">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff2e4"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="192" height="152" rx="18" fill="url(#g)" stroke="#c97b62" stroke-opacity=".35" stroke-width="2"/>
+  <text x="100" y="34" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#c97b62" letter-spacing="2">CAKE BOSS</text>
+  <g transform="translate(100 82)">
+    <text x="0" y="14" text-anchor="middle" font-size="46" aria-hidden="true">&#127874;<animateTransform attributeName="transform" type="scale" values="1 1;1.12 1.12;1 1" dur="2.4s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" keyTimes="0;0.5;1"/></text>
+  </g>
+  <text x="100" y="132" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-style="italic" fill="#5c4237">I only came for the frosting</text>
+</svg>

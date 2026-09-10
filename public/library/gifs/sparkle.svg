@@ -1,28 +1,52 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img">
-<style>
-
-  @keyframes bob   { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
-  @keyframes rise  { 0% { transform: translateY(10px); opacity: .55 } 50% { opacity: 1 } 100% { transform: translateY(-16px); opacity: .2 } }
-  @keyframes tw    { 0%,100% { opacity: .55; transform: scale(.9) } 50% { opacity: 1; transform: scale(1.15) } }
-  @keyframes sway  { 0%,100% { transform: rotate(-6deg) } 50% { transform: rotate(6deg) } }
-  @keyframes drift { 0% { transform: translateY(-6px) rotate(-8deg) } 100% { transform: translateY(10px) rotate(8deg) } }
-  @keyframes pop   { 0%,100% { transform: scale(1) } 45% { transform: scale(1.1) } }
-
-  .bob   { animation: bob 3.2s ease-in-out infinite; transform-origin: center }
-  .rise  { animation: rise 2.8s ease-in-out infinite; transform-origin: center }
-  .tw    { animation: tw 2.1s ease-in-out infinite; transform-origin: center }
-  .sway  { animation: sway 2.6s ease-in-out infinite; transform-origin: 50% 90% }
-  .drift { animation: drift 3.4s ease-in-out infinite alternate; transform-origin: center }
-  .pop   { animation: pop 2.4s ease-in-out infinite; transform-origin: center }
-
-  /* Motion is decoration; the composition above already reads without it. */
-  @media (prefers-reduced-motion: reduce) {
-    .bob, .rise, .tw, .sway, .drift, .pop { animation: none }
-  }
-</style>
-
-  <g class="tw"><path transform="translate(38 32) scale(1.9166666666666667)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#e0bd7a"/></g>
-  <g class="tw" style="animation-delay:.45s"><path transform="translate(16 16) scale(1)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#eccf96"/></g>
-  <g class="tw" style="animation-delay:.9s"><path transform="translate(72 64) scale(1.1666666666666667)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#d8ac5e"/></g>
-  <g class="tw" style="animation-delay:1.3s"><path transform="translate(82 18) scale(0.75)" opacity="1" d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" fill="#f2e0bd"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Sparkle">
+  <g transform="translate(60 52)">
+    <path d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" transform="translate(-12 -12)" fill="#f0d9a4">
+      <animateTransform attributeName="transform" type="scale" values="0.90;1.50;0.90"
+        dur="2.0s" begin="-0.0s" repeatCount="indefinite" additive="sum"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+        dur="8.0s" repeatCount="indefinite" additive="sum"/>
+      <animate attributeName="opacity" values="0.45;1;0.45" dur="2.0s" begin="-0.0s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g transform="translate(30 82)">
+    <path d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" transform="translate(-12 -12)" fill="#e8cb8e">
+      <animateTransform attributeName="transform" type="scale" values="0.51;0.85;0.51"
+        dur="2.6s" begin="-0.5s" repeatCount="indefinite" additive="sum"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+        dur="10.4s" repeatCount="indefinite" additive="sum"/>
+      <animate attributeName="opacity" values="0.45;1;0.45" dur="2.6s" begin="-0.5s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g transform="translate(88 78)">
+    <path d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" transform="translate(-12 -12)" fill="#f6e2b8">
+      <animateTransform attributeName="transform" type="scale" values="0.60;1.00;0.60"
+        dur="2.2s" begin="-1.0s" repeatCount="indefinite" additive="sum"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+        dur="8.8s" repeatCount="indefinite" additive="sum"/>
+      <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" begin="-1.0s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g transform="translate(84 28)">
+    <path d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" transform="translate(-12 -12)" fill="#e5c583">
+      <animateTransform attributeName="transform" type="scale" values="0.42;0.70;0.42"
+        dur="3.0s" begin="-1.5s" repeatCount="indefinite" additive="sum"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+        dur="12.0s" repeatCount="indefinite" additive="sum"/>
+      <animate attributeName="opacity" values="0.45;1;0.45" dur="3.0s" begin="-1.5s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g transform="translate(26 34)">
+    <path d="M12 0c.9 6.6 4.5 10.4 12 12-7.5 1.6-11.1 5.4-12 12-.9-6.6-4.5-10.4-12-12C7.5 10.4 11.1 6.6 12 0Z" transform="translate(-12 -12)" fill="#f0d9a4">
+      <animateTransform attributeName="transform" type="scale" values="0.36;0.60;0.36"
+        dur="2.8s" begin="-2.0s" repeatCount="indefinite" additive="sum"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360"
+        dur="11.2s" repeatCount="indefinite" additive="sum"/>
+      <animate attributeName="opacity" values="0.45;1;0.45" dur="2.8s" begin="-2.0s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
 </svg>
