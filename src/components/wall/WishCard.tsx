@@ -12,6 +12,12 @@ interface Props {
   style?: React.CSSProperties;
   /** Renders the media but skips the entry animation (used by the flying clone). */
   flat?: boolean;
+  /**
+   * How a guest photo is shown on the venue board. A banner across the top
+   * looks better, but on a small card it leaves room for about one line of the
+   * wish, so the board asks for a face beside the author instead.
+   */
+  photoStyle?: 'banner' | 'avatar';
 }
 
 /** A sticker is stored either as an emoji or as an image URL. */
@@ -19,9 +25,17 @@ function isEmoji(value: string): boolean {
   return !value.startsWith('/') && !value.startsWith('http');
 }
 
-export default function WishCard({ wish, variant = 'wall', className, style, flat = false }: Props) {
+export default function WishCard({
+  wish,
+  variant = 'wall',
+  className,
+  style,
+  flat = false,
+  photoStyle = 'banner',
+}: Props) {
   const isPreview = variant === 'preview';
   const isLive = variant === 'live';
+  const asAvatar = isLive && photoStyle === 'avatar' && Boolean(wish.selfieUrl);
   // GIFs first, then memes: the animated pieces are the ones worth noticing.
   const media = [...wish.gifs, ...wish.memes];
   const stickers = wish.stickers;
@@ -42,9 +56,13 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
           : 'glass',
         'shadow-[0_22px_46px_-28px_rgb(74_44_51/0.55)]',
         isPreview && 'w-full max-w-[22rem] p-5',
-        // Everything on the venue screen scales with the viewport so one layout
-        // works on a laptop preview and a 65" TV alike.
-        isLive && 'w-full gap-[0.8vw] p-[1.2vw]',
+        /*
+         * The board measures the space and hands each card an exact box, so the
+         * card fills it and clips nothing: `min-h-0` lets the message shrink
+         * inside the flex column rather than pushing the author line out of the
+         * bottom of the card, which is what used to happen on a long wish.
+         */
+        isLive && 'h-full w-full overflow-hidden p-[clamp(0.6rem,1vw,1.4rem)]',
         !isPreview && !isLive && 'w-[min(14.5rem,42vw)] gap-2.5 p-3.5 sm:w-[min(14.5rem,28vw)]',
         !flat && 'transition-transform duration-500',
         className,
@@ -58,12 +76,14 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
         aria-hidden
       />
 
-      {wish.selfieUrl && (
+      {wish.selfieUrl && !asAvatar && (
         <div
           className={cn(
-            'relative overflow-hidden rounded-2xl ring-1 ring-white/60',
-            isPreview ? 'h-40' : isLive ? 'h-[9vw]' : 'h-20',
+            'relative shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/60',
+            isPreview ? 'h-40' : !isLive && 'h-20',
           )}
+          // Sized by the board so a photo never crowds out the message.
+          style={isLive ? { height: 'var(--live-photo, 6rem)' } : undefined}
         >
           {/* Selfies are user uploads on a signed URL, so plain img keeps it simple. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -81,9 +101,22 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
         className={cn(
           'font-display text-balance-pretty leading-snug text-[var(--ink)]',
           isPreview && 'text-[1.15rem]',
-          isLive && 'line-clamp-6 text-[length:var(--live-text,clamp(0.95rem,1.2vw,2.1rem))] leading-relaxed',
+          isLive &&
+            'min-h-0 flex-1 overflow-hidden text-[length:var(--live-text,1.25rem)] leading-snug',
           !isPreview && !isLive && 'line-clamp-3 text-[0.86rem]',
         )}
+        // A long wish is trimmed with an ellipsis at whatever number of lines
+        // the card can actually hold, rather than a fixed count that overflows
+        // a short card and leaves a tall one half empty.
+        style={
+          isLive
+            ? {
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical',
+                WebkitLineClamp: 'var(--live-lines, 6)' as unknown as number,
+              }
+            : undefined
+        }
       >
         {wish.message}
       </p>
@@ -91,7 +124,7 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
       {(media.length > 0 || stickers.length > 0) && (
         // Wraps rather than scrolls: a guest may pick several, and a card that
         // clipped the last one would look broken rather than full.
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={cn('flex flex-wrap items-center gap-2', isLive && 'shrink-0')}>
           {media.map((src) => (
             <span
               key={src}
@@ -131,11 +164,22 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
         className={cn(
           'font-display italic text-[var(--ink-soft)]',
           isPreview && 'text-sm',
-          isLive && 'text-[length:var(--live-meta,clamp(0.78rem,0.9vw,1.5rem))]',
+          isLive && 'flex shrink-0 items-center gap-2 text-[length:var(--live-meta,0.9rem)]',
           !isPreview && !isLive && 'text-[0.78rem]',
         )}
       >
-        {wish.name ? `— ${wish.name}` : '— Anonymous'}
+        {asAvatar && (
+          <span
+            className="relative shrink-0 overflow-hidden rounded-full ring-1 ring-white/70"
+            style={{ width: 'var(--live-photo, 2rem)', height: 'var(--live-photo, 2rem)' }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={wish.selfieUrl!} alt="" className="size-full object-cover" loading="lazy" />
+          </span>
+        )}
+        <span className={cn(isLive && 'truncate')}>
+          {wish.name ? `— ${wish.name}` : '— Anonymous'}
+        </span>
       </footer>
     </article>
   );

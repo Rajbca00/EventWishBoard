@@ -8,6 +8,7 @@ import { BrandGlyph } from '@/components/ui/BrandMark';
 import { celebrate } from '@/lib/confetti';
 import { usePrefersReducedMotion } from '@/lib/hooks';
 import { seededRandom } from '@/lib/utils';
+import { BOARD_LIMIT, boardWishes, fitBoard, type BoardLayout } from '@/lib/wall-layout';
 import type { Theme } from '@/lib/themes';
 import type { PublicWish } from '@/lib/types';
 
@@ -26,9 +27,6 @@ interface Props {
    */
   forceMotion?: boolean;
 }
-
-/** Slower columns read as further away, which stops the board feeling like a grid. */
-const COLUMN_SPEEDS = [78, 96, 66, 88];
 
 /**
  * The venue screen: a projector or TV showing wishes as they arrive.
@@ -55,12 +53,13 @@ export default function LiveWall({
   const reducedMotion = prefersReduced && !forceMotion;
   const [wishes, setWishes] = useState<PublicWish[]>(initialWishes);
   const [arrivals, setArrivals] = useState<PublicWish[]>([]);
-  const [columns, setColumns] = useState(3);
+  const [space, setSpace] = useState({ width: 0, height: 0 });
   const [qr, setQr] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
 
   const seen = useRef(new Set(initialWishes.map((wish) => wish.id)));
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   /* -------------------------------------------------------------- QR code */
 
@@ -119,82 +118,108 @@ export default function LiveWall({
 
   /* -------------------------------------------------------------- layout */
 
-  useEffect(() => {
-    // A phone gets one column. Two 86px-wide cards side by side broke every
-    // message onto one word per line.
-    const measure = () => {
-      const w = window.innerWidth;
-      setColumns(w >= 1600 ? 4 : w >= 1100 ? 3 : w >= 640 ? 2 : 1);
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+  /*
+   * The board shows the newest handful and nothing else. Older wishes are not
+   * lost — they are in the dashboard, the memory book and the archive — but a
+   * screen across a room can only hold so many before each one is too small to
+   * read, and a marquee that scrolls them past means a guest who walks up has
+   * to wait to see their own.
+   */
+  const visible = useMemo(() => boardWishes(wishes, BOARD_LIMIT), [wishes]);
+
+  /*
+   * Measure the space the cards actually have rather than guessing it in vw.
+   * A projector, a 65" TV and a laptop all land here with different aspect
+   * ratios, and the previous vw-based sizing clipped cards off the bottom of
+   * anything that was not roughly 16:9.
+   */
+  const remember = useCallback((width: number, height: number) => {
+    setSpace((previous) =>
+      Math.abs(previous.width - width) < 1 && Math.abs(previous.height - height) < 1
+        ? previous
+        : { width, height },
+    );
   }, []);
 
   /*
-   * Early in an evening there are only a handful of wishes, and padding them
-   * out to fill a projector just prints the same message six times — it reads
-   * as a bug, and it makes two real wishes look like filler. Below the point
-   * where the columns can be filled honestly, the board switches to a showcase:
-   * every wish shown once, larger, drifting gently.
+   * Measured as soon as the element exists, rather than waiting for the first
+   * ResizeObserver callback. The observer is the right tool for a projector
+   * being re-plugged or a window being dragged between screens, but its first
+   * delivery is tied to the rendering loop — and a board that shows nothing
+   * until that arrives is a blank screen at a wedding.
    */
-  const scrolling = wishes.length >= columns * 3;
+  const attachBoard = useCallback(
+    (element: HTMLDivElement | null) => {
+      boardRef.current = element;
+      if (!element) return;
+      const box = element.getBoundingClientRect();
+      remember(box.width, box.height);
+    },
+    [remember],
+  );
 
-  const lanes = useMemo(() => {
-    if (!wishes.length || !scrolling) return [];
+  useEffect(() => {
+    const element = boardRef.current;
+    if (!element) return;
 
-    const perColumn: PublicWish[][] = Array.from({ length: columns }, () => []);
-    wishes.forEach((wish, index) => perColumn[index % columns]!.push(wish));
-
-    return perColumn.map((lane, index) => {
-      const filled = lane.length ? lane : wishes;
-
-      /*
-       * The track is the column's wishes emitted exactly twice. That doubling
-       * is what makes the loop seamless: the animation translates by -50%,
-       * landing precisely on the start of the second copy. An odd number of
-       * repeats would stop mid-block and visibly jump every cycle.
-       */
-      const items = [...filled, ...filled];
-
-      const random = seededRandom(`lane:${eventId}:${index}`);
-      return {
-        key: index,
-        items,
-        // Longer columns take proportionally longer, so every lane drifts at
-        // roughly the same speed regardless of how much it holds.
-        duration: COLUMN_SPEEDS[index % COLUMN_SPEEDS.length]! * (filled.length / 4),
-        delay: -random() * 40,
-        reverse: index % 2 === 1,
-      };
+    const observer = new ResizeObserver(([entry]) => {
+      const box = entry?.contentRect;
+      if (box) remember(box.width, box.height);
     });
-  }, [wishes, columns, eventId, scrolling]);
+    observer.observe(element);
 
-  /** Showcase layout: each wish once, gently floating on its own rhythm. */
-  const showcase = useMemo(() => {
-    if (!wishes.length || scrolling) return [];
-    return wishes.map((wish, index) => {
-      const random = seededRandom(`showcase:${eventId}:${wish.id}`);
-      return {
-        wish,
-        delay: random() * 20,
-        duration: 16 + random() * 12,
-        tilt: (random() - 0.5) * 5,
-        key: `${wish.id}-${index}`,
-      };
-    });
-  }, [wishes, eventId, scrolling]);
+    const measure = () => {
+      const now = element.getBoundingClientRect();
+      remember(now.width, now.height);
+    };
+
+    /*
+     * Measure again now that layout has settled. The ref callback runs during
+     * commit, when the flex row heights above this element are not final, so
+     * its reading can be short — and a board that believes it has half the room
+     * it really has lays fifteen wishes out as a strip of tiny cards. The
+     * retries cover browsers where the observer's first delivery is late.
+     */
+    measure();
+    const retries = [0, 200, 800].map((delay) => window.setTimeout(measure, delay));
+    window.addEventListener('resize', measure);
+
+    return () => {
+      observer.disconnect();
+      retries.forEach(window.clearTimeout);
+      window.removeEventListener('resize', measure);
+    };
+  }, [remember]);
+
+  const layout: BoardLayout = useMemo(
+    () => fitBoard({ width: space.width, height: space.height, count: visible.length }),
+    [space.width, space.height, visible.length],
+  );
+
+  /** A slow, small drift so the board is alive without anything leaving its cell. */
+  const drifts = useMemo(
+    () =>
+      visible.map((wish) => {
+        const random = seededRandom(`board:${eventId}:${wish.id}`);
+        return {
+          duration: 18 + random() * 14,
+          delay: -random() * 20,
+          tilt: (random() - 0.5) * 2.4,
+        };
+      }),
+    [visible, eventId],
+  );
 
   return (
     <div
-      className={`relative isolate h-dvh w-screen overflow-hidden bg-[var(--bg-1)] ${
+      className={`relative isolate flex h-dvh w-screen flex-col overflow-hidden bg-[var(--bg-1)] ${
         forceMotion ? 'force-motion' : ''
       }`}
     >
       <SceneBackground theme={theme} intensity="full" seed={`live:${eventId}`} />
 
       {/* ------------------------------------------------------------ header */}
-      <header className="absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-8 px-[3vw] py-[2.5vh]">
+      <header className="relative z-30 flex shrink-0 items-start justify-between gap-8 px-[3vw] py-[2vh]">
         <div>
           <p className="text-[length:clamp(0.6rem,1vw,1.15rem)] uppercase tracking-[0.28em] text-[var(--ink-soft)]">
             {theme.emoji} Wishes for
@@ -204,6 +229,9 @@ export default function LiveWall({
           </h1>
           <p className="mt-2 text-[length:clamp(0.78rem,1.05vw,1.4rem)] text-[var(--ink-soft)]">
             {wishes.length} {wishes.length === 1 ? 'wish' : 'wishes'} and counting
+            {wishes.length > BOARD_LIMIT && (
+              <span className="opacity-70"> · showing the latest {BOARD_LIMIT}</span>
+            )}
           </p>
         </div>
 
@@ -221,89 +249,72 @@ export default function LiveWall({
       </header>
 
       {/* ------------------------------------------------------------ the board */}
-      <div
-        className={`absolute inset-0 z-10 px-[3vw] ${
-          scrolling ? 'grid gap-[1.6vw]' : 'flex flex-wrap content-center items-center justify-center gap-[2vw]'
-        }`}
-        style={{
-          // Showcase cards hold the whole screen between them, so their type
-          // can be far larger than a scrolling column's.
-          ['--live-text' as string]: scrolling
-            ? 'clamp(0.95rem, 1.3vw, 2.1rem)'
-            : 'clamp(1.05rem, 1.9vw, 3rem)',
-          ['--live-meta' as string]: scrolling
-            ? 'clamp(0.78rem, 0.95vw, 1.5rem)'
-            : 'clamp(0.85rem, 1.2vw, 1.8rem)',
-          gridTemplateColumns: scrolling ? `repeat(${columns}, minmax(0, 1fr))` : undefined,
-          // Leave room for the header and footer bands.
-          paddingTop: 'clamp(8.5rem, 16vh, 13rem)',
-          paddingBottom: '10vh',
-        }}
-      >
-        {/* A handful of wishes: show each one once, larger, drifting. */}
-        {showcase.map((entry) => (
+      {/*
+        * The padding is the safe area: the header band at the top and the
+        * footer band at the bottom. Cards are laid out inside what is left, so
+        * one can never slide under the title or off the bottom edge.
+        */}
+      <div className="relative z-10 min-h-0 flex-1 px-[3vw] pb-[1vh]">
+        <div ref={attachBoard} className="relative h-full w-full">
+        {visible.length > 0 && layout.rows > 0 && (
           <div
-            key={entry.key}
-            className="wander"
+            className="grid h-full w-full place-items-center"
             style={{
-              ['--tilt' as string]: `${entry.tilt}deg`,
-              ['--wander-duration' as string]: `${entry.duration}s`,
-              animationDelay: `-${entry.delay}s`,
-              /*
-               * A rem floor keeps a card readable when vw is small. Sizing
-               * purely in vw was tuned for a projector and collapsed to ~86px
-               * on a phone, so every message wrapped one word per line. The
-               * fewer wishes there are, the more room each gets.
-               */
-              width: `min(88vw, clamp(16rem, ${Math.max(20, 38 - showcase.length * 3)}vw, 30rem))`,
+              gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${layout.rows}, minmax(0, 1fr))`,
+              gap: `${layout.gap}px`,
+              // Every card reads off these, so the whole board scales together.
+              ['--live-text' as string]: `${layout.messagePx}px`,
+              ['--live-meta' as string]: `${layout.metaPx}px`,
+              ['--live-photo' as string]: `${layout.photoPx}px`,
             }}
           >
-            <WishCard
-              wish={entry.wish}
-              variant="live"
-              className={arrivals.some((a) => a.id === entry.wish.id) ? 'just-arrived' : undefined}
-            />
-          </div>
-        ))}
-
-        {lanes.map((lane) => (
-          <div key={lane.key} className="relative overflow-hidden">
-            <div
-              className={`marquee-track flex flex-col gap-[1.4vw] ${
-                lane.reverse ? 'marquee-track--down' : ''
-              }`}
-              style={{
-                ['--marquee-duration' as string]: `${lane.duration}s`,
-                animationDuration: `${lane.duration}s`,
-                animationDelay: `${lane.delay}s`,
-                animationPlayState: reducedMotion ? 'paused' : 'running',
-              }}
-            >
-              {lane.items.map((wish, index) => (
-                <div key={`${wish.id}-${index}`} className="shrink-0">
+            {visible.map((wish, index) => {
+              const drift = drifts[index]!;
+              return (
+                <div
+                  key={wish.id}
+                  className="wander flex items-center justify-center"
+                  style={{
+                    width: layout.cardWidth,
+                    height: layout.cardHeight,
+                    ['--live-lines' as string]: String(
+                      wish.selfieUrl ? layout.linesWithPhoto : layout.lines,
+                    ),
+                    ['--tilt' as string]: `${drift.tilt}deg`,
+                    ['--wander-duration' as string]: `${drift.duration}s`,
+                    // A small fraction of the full drift, so a card breathes
+                    // in place instead of wandering out of its cell.
+                    ['--drift' as string]: '0.35',
+                    animationDelay: `${drift.delay}s`,
+                    animationPlayState: reducedMotion ? 'paused' : 'running',
+                  }}
+                >
                   <WishCard
                     wish={wish}
                     variant="live"
+                    photoStyle={layout.photoStyle}
                     className={arrivals.some((a) => a.id === wish.id) ? 'just-arrived' : undefined}
                   />
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        ))}
+        )}
 
         {wishes.length === 0 && (
-          <div className="col-span-full flex items-center justify-center">
-            <p className="font-display text-[2vw] text-[var(--ink-soft)]">
+          <div className="flex h-full items-center justify-center">
+            <p className="font-display text-[length:clamp(1.1rem,2vw,2.6rem)] text-[var(--ink-soft)]">
               The first wish will appear here ✨
             </p>
           </div>
         )}
+        </div>
       </div>
 
       {/* ------------------------------------------------------------ arrivals */}
       {arrivals.length > 0 && (
-        <div className="reveal absolute inset-x-0 bottom-[9vh] z-40 flex justify-center px-[3vw]">
+        <div className="reveal pointer-events-none absolute inset-x-0 bottom-[7vh] z-40 flex justify-center px-[3vw]">
           <p className="rounded-full bg-white/85 px-5 py-2.5 font-display text-[length:clamp(0.9rem,1.5vw,2rem)] text-[var(--ink)] shadow-lg backdrop-blur">
             💌 New {arrivals.length === 1 ? 'wish' : 'wishes'} from{' '}
             {arrivals.map((wish) => wish.name ?? 'a guest').join(', ')}
@@ -312,7 +323,7 @@ export default function LiveWall({
       )}
 
       {/* ------------------------------------------------------------ footer */}
-      <footer className="absolute inset-x-0 bottom-0 z-30 flex items-center justify-between px-[3vw] py-[2vh]">
+      <footer className="relative z-30 flex shrink-0 items-center justify-between px-[3vw] py-[1.4vh]">
         <p className="flex items-center gap-2 text-[0.95vw] uppercase tracking-[0.24em] text-[var(--ink-soft)]/80">
           <BrandGlyph size={16} className="opacity-70" />
           A Laya &amp; Bee experience
@@ -322,15 +333,11 @@ export default function LiveWall({
         </p>
       </footer>
 
-      {/* Soft vignette so cards fade rather than clip at the edges */}
-      <div
-        className="pointer-events-none absolute inset-0 z-20"
-        style={{
-          background:
-            'linear-gradient(to bottom, var(--bg-1) 0%, transparent 20%, transparent 88%, var(--bg-1) 100%)',
-        }}
-        aria-hidden
-      />
+      {/*
+        * No vignette any more. It existed to fade cards that were being clipped
+        * by the top and bottom edges; the board now fits inside its safe area,
+        * so the only thing a vignette did was dim the first and last rows.
+        */}
     </div>
   );
 }
