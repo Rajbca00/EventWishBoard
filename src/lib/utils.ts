@@ -7,10 +7,17 @@ export function cn(...inputs: ClassValue[]) {
 
 /* ------------------------------------------------------------------ text */
 
-/** Strips markup and control characters from anything a guest typed. */
+/**
+ * Strips markup and control characters from anything a guest typed.
+ *
+ * Only things that genuinely look like tags are removed. The obvious pattern,
+ * `<[^>]*>`, also eats everything between an innocent `<` and any later `>` —
+ * so "3 < 5 and 10 > 2" came out as "3  2", quietly deleting the middle of
+ * someone's message. A tag has to start with a letter or a slash.
+ */
 export function sanitizeText(input: unknown, maxLen?: number): string {
   let s = String(input ?? '');
-  s = s.replace(/<[^>]*>/g, '');
+  s = s.replace(/<\/?[a-zA-Z][^>]*>/g, '');
   // Drop control characters, keeping tab and newline.
   s = Array.from(s)
     .filter((ch) => {

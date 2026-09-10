@@ -4,7 +4,7 @@ import { demoData, demoNewId } from '../demo/store';
 import { deleteSelfie, signSelfies, uploadSelfie } from '../images';
 import { looksLikeSpam, sanitizeText } from '../utils';
 import { isSupabaseConfigured, LIMITS } from '../env';
-import { isMissingColumn, shapeAdminWish, shapePublicWish } from './shape';
+import { canShowPhotoOnWall, isMissingColumn, shapeAdminWish, shapePublicWish } from './shape';
 import { getEventStats, statusFor } from './events';
 import type {
   AdminWish,
@@ -50,10 +50,7 @@ export async function getWallWishes(
       .slice(0, limit)
       .reverse()
       .map((row) =>
-        shapePublicWish(
-          row,
-          event.settings.publicSelfies && row.selfie_public ? row.selfie_path : null,
-        ),
+        shapePublicWish(row, canShowPhotoOnWall(event.settings, row) ? row.selfie_path : null),
       );
   }
 
@@ -69,11 +66,9 @@ export async function getWallWishes(
   if (error) throw new Error(error.message);
   const rows = ((data ?? []) as WishRow[]).slice().reverse();
 
-  // A photo reaches the wall only when the organiser allows sharing AND the
-  // guest chose to share theirs. Either one saying no keeps it private.
-  const shareable = (row: WishRow) =>
-    event.settings.publicSelfies && row.selfie_public && Boolean(row.selfie_path);
+  const shareable = (row: WishRow) => canShowPhotoOnWall(event.settings, row);
 
+  // Nothing to sign when the event keeps every photo private.
   if (!event.settings.publicSelfies) {
     return rows.map((row) => shapePublicWish(row, null));
   }

@@ -74,6 +74,22 @@ function decorations(list: string[] | null | undefined, legacy: string | null): 
 }
 
 /**
+ * Whether a guest's photo may appear on the public wall.
+ *
+ * Two locks, and either one saying no keeps the photo private: the organiser
+ * has to allow photos on the wall for this event, and the guest has to have
+ * chosen to share theirs. This lives in one place on purpose — the rule was
+ * written out separately for each data source before, which is how a privacy
+ * decision quietly drifts apart from itself.
+ */
+export function canShowPhotoOnWall(
+  settings: Pick<EventSettings, 'publicSelfies'>,
+  row: Pick<WishRow, 'selfie_public' | 'selfie_path'>,
+): boolean {
+  return Boolean(settings.publicSelfies && row.selfie_public && row.selfie_path);
+}
+
+/**
  * Public shape. `selfieUrl` is only ever populated when the organiser has
  * explicitly opted into showing guest photos on the wall.
  */
