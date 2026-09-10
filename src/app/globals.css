@@ -54,6 +54,7 @@
   --accent-soft: #ffd9e4;
   --gold: #d8a657;
   --card: rgb(255 252 248 / 0.80);
+  --card-solid: #fffcf8;
   --card-line: rgb(168 116 128 / 0.20);
   --wall-1: #fce3ec;
   --wall-2: #e8dcff;
@@ -84,6 +85,7 @@
   --accent-soft: #f7dde5;
   --gold: var(--brand-gold);
   --card: #ffffff;
+  --card-solid: #ffffff;
   --card-line: rgb(56 32 14 / 0.14);
 }
 
@@ -414,7 +416,14 @@ button,
   animation-name: marquee-up;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
-  will-change: transform;
+  /*
+   * Deliberately no `will-change: transform`. Promoting the track to its own
+   * compositor layer permanently makes the browser rasterise its text once and
+   * then scale that bitmap, and composited text also loses subpixel
+   * anti-aliasing — together that is what made the wall look faintly
+   * pixelated. The animation still gets a layer while it runs; it just does
+   * not keep a stale raster between frames.
+   */
 }
 
 .marquee-track--down {
@@ -453,7 +462,6 @@ button,
 
 .wander {
   animation: wander var(--wander-duration, 18s) ease-in-out infinite;
-  will-change: transform;
 }
 
 /*

@@ -120,8 +120,12 @@ export default function LiveWall({
   /* -------------------------------------------------------------- layout */
 
   useEffect(() => {
-    const measure = () =>
-      setColumns(window.innerWidth >= 1600 ? 4 : window.innerWidth >= 1100 ? 3 : 2);
+    // A phone gets one column. Two 86px-wide cards side by side broke every
+    // message onto one word per line.
+    const measure = () => {
+      const w = window.innerWidth;
+      setColumns(w >= 1600 ? 4 : w >= 1100 ? 3 : w >= 640 ? 2 : 1);
+    };
     measure();
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
@@ -192,21 +196,21 @@ export default function LiveWall({
       {/* ------------------------------------------------------------ header */}
       <header className="absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-8 px-[3vw] py-[2.5vh]">
         <div>
-          <p className="text-[1vw] uppercase tracking-[0.34em] text-[var(--ink-soft)]">
+          <p className="text-[length:clamp(0.6rem,1vw,1.15rem)] uppercase tracking-[0.28em] text-[var(--ink-soft)]">
             {theme.emoji} Wishes for
           </p>
-          <h1 className="mt-2 font-display text-[3.6vw] leading-none tracking-tight text-[var(--ink)]">
+          <h1 className="mt-2 font-display text-[length:clamp(1.5rem,3.6vw,4.2rem)] leading-none tracking-tight text-[var(--ink)]">
             {hosts}
           </h1>
-          <p className="mt-3 text-[1.05vw] text-[var(--ink-soft)]">
+          <p className="mt-2 text-[length:clamp(0.78rem,1.05vw,1.4rem)] text-[var(--ink-soft)]">
             {wishes.length} {wishes.length === 1 ? 'wish' : 'wishes'} and counting
           </p>
         </div>
 
         <div className="flex items-center gap-[1.4vw] rounded-[1.4vw] bg-white/70 px-[1.4vw] py-[1.2vh] backdrop-blur-md">
-          <canvas ref={canvasRef} className="size-[7vw] max-h-32 max-w-32 rounded-lg" aria-hidden />
+          <canvas ref={canvasRef} className="size-[clamp(3.25rem,7vw,8rem)] rounded-lg" aria-hidden />
           <div>
-            <p className="font-display text-[1.5vw] leading-tight text-[var(--ink)]">
+            <p className="hidden font-display text-[length:clamp(0.8rem,1.5vw,2rem)] leading-tight text-[var(--ink)] sm:block">
               Scan to add
               <br />
               your wish
@@ -225,14 +229,14 @@ export default function LiveWall({
           // Showcase cards hold the whole screen between them, so their type
           // can be far larger than a scrolling column's.
           ['--live-text' as string]: scrolling
-            ? 'clamp(0.95rem, 1.2vw, 2.1rem)'
-            : 'clamp(1.35rem, 2vw, 3.4rem)',
+            ? 'clamp(0.95rem, 1.3vw, 2.1rem)'
+            : 'clamp(1.05rem, 1.9vw, 3rem)',
           ['--live-meta' as string]: scrolling
-            ? 'clamp(0.78rem, 0.9vw, 1.5rem)'
-            : 'clamp(1rem, 1.25vw, 2rem)',
+            ? 'clamp(0.78rem, 0.95vw, 1.5rem)'
+            : 'clamp(0.85rem, 1.2vw, 1.8rem)',
           gridTemplateColumns: scrolling ? `repeat(${columns}, minmax(0, 1fr))` : undefined,
           // Leave room for the header and footer bands.
-          paddingTop: '18vh',
+          paddingTop: 'clamp(8.5rem, 16vh, 13rem)',
           paddingBottom: '10vh',
         }}
       >
@@ -245,11 +249,13 @@ export default function LiveWall({
               ['--tilt' as string]: `${entry.tilt}deg`,
               ['--wander-duration' as string]: `${entry.duration}s`,
               animationDelay: `-${entry.delay}s`,
-              // The fewer there are, the more room each one gets — two wishes
-              // should feel like a centrepiece, not two lost cards.
-              width: `min(${Math.max(20, 38 - showcase.length * 3)}vw, ${
-                100 / Math.min(showcase.length, 3) - 4
-              }%)`,
+              /*
+               * A rem floor keeps a card readable when vw is small. Sizing
+               * purely in vw was tuned for a projector and collapsed to ~86px
+               * on a phone, so every message wrapped one word per line. The
+               * fewer wishes there are, the more room each gets.
+               */
+              width: `min(88vw, clamp(16rem, ${Math.max(20, 38 - showcase.length * 3)}vw, 30rem))`,
             }}
           >
             <WishCard
@@ -298,7 +304,7 @@ export default function LiveWall({
       {/* ------------------------------------------------------------ arrivals */}
       {arrivals.length > 0 && (
         <div className="reveal absolute inset-x-0 bottom-[9vh] z-40 flex justify-center px-[3vw]">
-          <p className="rounded-full bg-white/85 px-[2vw] py-[1.2vh] font-display text-[1.5vw] text-[var(--ink)] shadow-lg backdrop-blur">
+          <p className="rounded-full bg-white/85 px-5 py-2.5 font-display text-[length:clamp(0.9rem,1.5vw,2rem)] text-[var(--ink)] shadow-lg backdrop-blur">
             💌 New {arrivals.length === 1 ? 'wish' : 'wishes'} from{' '}
             {arrivals.map((wish) => wish.name ?? 'a guest').join(', ')}
           </p>

@@ -27,7 +27,17 @@ export default function WishCard({ wish, variant = 'wall', className, style, fla
   return (
     <article
       className={cn(
-        'glass relative flex flex-col gap-3 rounded-[1.4rem] text-left',
+        'relative flex flex-col gap-3 rounded-[1.4rem] text-left',
+        /*
+         * The venue board uses a solid card rather than the frosted one. A
+         * backdrop-filter forces every card onto its own GPU layer, and text
+         * on a composited layer is rendered with grayscale anti-aliasing and
+         * resampled as the card drifts — crisp type matters more here than
+         * the glass effect, and it is far cheaper across a whole evening.
+         */
+        isLive
+          ? 'border border-[var(--card-line)] bg-[var(--card-solid)]'
+          : 'glass',
         'shadow-[0_22px_46px_-28px_rgb(74_44_51/0.55)]',
         isPreview && 'w-full max-w-[22rem] p-5',
         // Everything on the venue screen scales with the viewport so one layout
