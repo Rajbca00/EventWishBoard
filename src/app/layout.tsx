@@ -2,18 +2,27 @@ import type { Metadata, Viewport } from 'next';
 import { Playfair_Display, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 
+/*
+ * Both faces load as variable fonts — omitting `weight` is what tells
+ * next/font to fetch the variable file rather than a set of static instances.
+ *
+ * It is one smaller download instead of four or five, and weights interpolate
+ * along the real `wght` axis, so a semibold heading is the typeface's own
+ * semibold rather than the nearest static cut. That is most visible at the
+ * large sizes the venue wall and hero headings use.
+ */
 const playfair = Playfair_Display({
   variable: '--font-playfair',
   subsets: ['latin'],
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+  adjustFontFallback: true,
 });
 
 const jakarta = Plus_Jakarta_Sans({
   variable: '--font-jakarta',
   subsets: ['latin'],
   display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
+  adjustFontFallback: true,
 });
 
 export const metadata: Metadata = {
@@ -48,7 +57,10 @@ export default function RootLayout({
     // The font variables live on <html> so Tailwind's :root theme layer, which
     // references them via --font-display / --font-body, can resolve them.
     <html lang="en" className={`${playfair.variable} ${jakarta.variable}`}>
-      <body className="antialiased">{children}</body>
+      {/* No `antialiased` class here on purpose: it forces grayscale smoothing on
+          every display. globals.css applies that only on high-DPI screens, where
+          it actually helps. */}
+      <body>{children}</body>
     </html>
   );
 }

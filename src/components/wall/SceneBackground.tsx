@@ -65,20 +65,36 @@ export default function SceneBackground({ theme, intensity = 'ambient', seed = '
       const depth = random();
 
       /*
-       * Keep the vertical middle clear rather than the horizontal middle.
-       * Reserving side margins only works when there are side margins — on a
-       * phone the headline runs edge to edge, so "stay near the sides" put a
-       * macaron directly behind the couple's names. Content sits in the middle
-       * band on every screen; decor lives above and below it.
+       * Where the content sits differs by surface, so the safe zone does too.
+       *
+       * 'full' screens (welcome, thank-you, the wall) centre their content, so
+       * decor lives in the top and bottom bands. 'ambient' screens are the
+       * composer steps, which run top-down from a heading with a pinned CTA at
+       * the bottom — there the top band is exactly where the heading is, so
+       * decor keeps to the far corners instead.
        */
-      const top = random() < 0.5 ? random() * 27 : 73 + random() * 27;
+      const ambient = intensity === 'ambient';
+      const top = ambient
+        ? random() < 0.35
+          ? random() * 9
+          : 72 + random() * 28
+        : random() < 0.5
+          ? random() * 27
+          : 73 + random() * 27;
+
+      // On the step screens, also hug the sides: the CTA spans the full width.
+      const left = ambient
+        ? random() < 0.5
+          ? random() * 20
+          : 80 + random() * 18
+        : 4 + random() * 92;
 
       const safeName = (name in DECOR_COMPONENTS ? name : 'sparkle') as DecorName;
       return {
         key: `${name}-${index}`,
         name: safeName,
         motion: MOTION_FOR[safeName] ?? 'drift',
-        left: 4 + random() * 92,
+        left,
         top,
         // Distant pieces are smaller and fainter — cheap but convincing depth.
         // The floor is high enough that a macaron still looks like a macaron.
