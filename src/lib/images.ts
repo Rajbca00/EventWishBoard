@@ -99,19 +99,69 @@ export async function signSelfie(path: string, expiresIn = 60 * 60): Promise<str
   return data.signedUrl;
 }
 
-export async function signSelfies(paths: string[], expiresIn = 60 * 60): Promise<Map<string, string>> {
+/*
+ * Signed URLs are cached so that asking for the same photo twice returns the
+ * same URL.
+ *
+ * Without this, every request minted a fresh token, so the same image arrived
+ * under a new URL each time and no browser could ever cache it. The venue wall
+ * polls every 30 seconds: at an event with public photos that meant
+ * re-downloading the entire wall twice a minute — hundreds of megabytes an hour
+ * of egress for images that had not changed.
+ *
+ * The cache is per server instance and purely an optimisation: a miss just
+ * signs again. Entries are refreshed well before the signature itself lapses.
+ */
+const SIGNED_TTL_SECONDS = 60 * 60 * 6;
+const REFRESH_BEFORE_MS = 60 * 60 * 1000; // re-sign with an hour still to run
+
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
+function cachedSignedUrl(path: string): string | null {
+  const hit = signedUrlCache.get(path);
+  if (!hit) return null;
+  if (hit.expiresAt - REFRESH_BEFORE_MS < Date.now()) {
+    signedUrlCache.delete(path);
+    return null;
+  }
+  return hit.url;
+}
+
+export async function signSelfies(
+  paths: string[],
+  expiresIn = SIGNED_TTL_SECONDS,
+): Promise<Map<string, string>> {
   const unique = [...new Set(paths.filter(Boolean))];
   if (!unique.length) return new Map();
 
+  const map = new Map<string, string>();
+  const missing: string[] = [];
+
+  for (const path of unique) {
+    const cached = cachedSignedUrl(path);
+    if (cached) map.set(path, cached);
+    else missing.push(path);
+  }
+  if (!missing.length) return map;
+
   const { data, error } = await supabaseAdmin()
     .storage.from(MEMORY_BUCKET)
-    .createSignedUrls(unique, expiresIn);
+    .createSignedUrls(missing, expiresIn);
 
-  const map = new Map<string, string>();
   if (error || !data) return map;
+
+  const expiresAt = Date.now() + expiresIn * 1000;
   data.forEach((entry) => {
-    if (entry.signedUrl && entry.path) map.set(entry.path, entry.signedUrl);
+    if (entry.signedUrl && entry.path) {
+      map.set(entry.path, entry.signedUrl);
+      signedUrlCache.set(entry.path, { url: entry.signedUrl, expiresAt });
+    }
   });
+
+  // Keep the cache from growing without bound over a long-running instance.
+  if (signedUrlCache.size > 2000) {
+    for (const key of [...signedUrlCache.keys()].slice(0, 500)) signedUrlCache.delete(key);
+  }
   return map;
 }
 

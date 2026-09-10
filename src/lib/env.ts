@@ -87,8 +87,13 @@ export const BRAND = {
 export const LIMITS = {
   wishChars: 300,
   nameChars: 40,
-  /** Decoded bytes. The browser compresses selfies well below this. */
-  selfieBytes: 3 * 1024 * 1024,
+  /**
+   * Decoded bytes, and the real ceiling — the browser aims for under 1 MB, and
+   * this rejects anything larger whether it came from our composer or not.
+   * The headroom above 1 MB is only so a legitimately borderline photo is not
+   * turned away over a few hundred bytes.
+   */
+  selfieBytes: Math.round(1.25 * 1024 * 1024),
   assetBytes: 5 * 1024 * 1024,
   wishWindowMs: 60_000,
   wishPerWindow: 3,

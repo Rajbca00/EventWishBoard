@@ -4,6 +4,7 @@ import { getBookForEvent, getBookToken } from '@/lib/data/book';
 import { siteUrl } from '@/lib/env';
 import { PageHeader, Panel } from '@/components/admin/ui';
 import BookSharePanel from '@/components/admin/BookSharePanel';
+import ArchiveButton from '@/components/admin/ArchiveButton';
 import MemoryBookView from '@/components/book/MemoryBookView';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +42,13 @@ export default async function BookPage({
             initialToken={token}
             photoCount={book?.counts.photos ?? 0}
           />
+        </Panel>
+
+        <Panel
+          title="Download the archive"
+          description="Everything in one zip, to keep or hand over"
+        >
+          <ArchiveButton eventId={event.id} />
         </Panel>
 
         <Panel title="Preview" description="Exactly what the couple will see">
