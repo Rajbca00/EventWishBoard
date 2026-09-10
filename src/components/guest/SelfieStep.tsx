@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import Button from '@/components/ui/Button';
 import StepShell from './StepShell';
-import { compressImage } from '@/lib/image-client';
+import { processImage, formatBytes } from '@/lib/image-client';
 import type { Theme } from '@/lib/themes';
 
 interface Props {
@@ -88,7 +88,10 @@ export default function SelfieStep({
   const galleryRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [size, setSize] = useState<string | null>(null);
 
+  // One photo per wish. Taking another replaces it rather than adding to it,
+  // so `files[0]` is deliberate — the inputs carry no `multiple` attribute.
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -97,12 +100,23 @@ export default function SelfieStep({
     setError(null);
     setBusy(true);
     try {
-      onSelfieChange(await compressImage(file));
-    } catch {
-      setError('That photo could not be used. Try another one.');
+      const processed = await processImage(file);
+      onSelfieChange(processed.dataUrl);
+      setSize(formatBytes(processed.bytes));
+    } catch (caught) {
+      setError(
+        caught instanceof Error && caught.message
+          ? caught.message
+          : 'That photo could not be used. Try another one.',
+      );
     } finally {
       setBusy(false);
     }
+  };
+
+  const clearSelfie = () => {
+    onSelfieChange(null);
+    setSize(null);
   };
 
   return (
@@ -126,7 +140,7 @@ export default function SelfieStep({
           {selfie && (
             <button
               type="button"
-              onClick={() => onSelfieChange(null)}
+              onClick={clearSelfie}
               className="w-full py-2 text-[0.82rem] text-[var(--ink-soft)] underline underline-offset-2"
             >
               Remove photo
@@ -162,13 +176,19 @@ export default function SelfieStep({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={selfie} alt="Your selfie" className="size-full object-cover" />
           </div>
-          <button
-            type="button"
-            onClick={() => cameraRef.current?.click()}
-            className="mx-auto block text-[0.85rem] text-[var(--ink-soft)] underline underline-offset-2"
-          >
-            Retake
-          </button>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => cameraRef.current?.click()}
+              className="text-[0.85rem] text-[var(--ink-soft)] underline underline-offset-2 disabled:opacity-60"
+            >
+              {busy ? 'Processing…' : 'Retake'}
+            </button>
+            {size && !busy && (
+              <span className="text-[0.78rem] text-[var(--ink-soft)] opacity-70">· {size}</span>
+            )}
+          </div>
 
           {/* The photo is the guest's, so the guest decides where it goes.
               Private is preselected — sharing has to be a deliberate choice. */}

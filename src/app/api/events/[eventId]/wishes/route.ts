@@ -5,6 +5,9 @@ import { wishSubmissionSchema, firstIssue } from '@/lib/validation';
 import { ipHashFrom, jsonError, jsonOk } from '@/lib/request';
 import { ImageError } from '@/lib/images';
 
+/** Generous next to a 1 MB photo, mean next to an attack. */
+const MAX_BODY_BYTES = 3 * 1024 * 1024;
+
 interface RouteContext {
   params: Promise<{ eventId: string }>;
 }
@@ -29,6 +32,14 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
   const event = await getEvent(eventId);
   if (!event) return jsonError('Event not found', 404);
+
+  // One wish carries at most one selfie of about a megabyte, which is roughly
+  // 1.4 MB once base64-encoded. Anything far past that is refused before we
+  // buffer it rather than after.
+  const declaredLength = Number(request.headers.get('content-length') ?? 0);
+  if (declaredLength > MAX_BODY_BYTES) {
+    return jsonError('That submission is too large. Try a smaller photo.', 413);
+  }
 
   let body: unknown;
   try {

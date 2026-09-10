@@ -1,12 +1,26 @@
 import { z } from 'zod';
 import { LIMITS } from './env';
 
+/**
+ * Base64 costs a third more characters than the bytes it carries, so the
+ * character cap is the byte cap plus that overhead plus a little slack. It is
+ * only a cheap first gate: `decodeDataUrl` checks the real decoded size.
+ */
+const maxDataUrlChars = Math.ceil((LIMITS.assetBytes * 4) / 3) + 512;
+
 const dataUrl = z
   .string()
+  .max(maxDataUrlChars, 'That image is too large')
   .regex(
     /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=\s]+$/i,
     'Image must be a PNG, JPEG, WebP or GIF data URL',
   );
+
+/** The selfie slot is tighter than an organiser asset, and there is only one. */
+const selfieDataUrl = dataUrl.max(
+  Math.ceil((LIMITS.selfieBytes * 4) / 3) + 512,
+  'That photo is too large',
+);
 
 /** What a guest submits from the wish composer. */
 export const wishSubmissionSchema = z.object({
@@ -16,7 +30,8 @@ export const wishSubmissionSchema = z.object({
   sticker: z.string().max(400).nullable().optional(),
   gif: z.string().max(400).nullable().optional(),
   meme: z.string().max(400).nullable().optional(),
-  selfie: dataUrl.nullable().optional(),
+  /** Exactly one photo per wish, or none. */
+  selfie: selfieDataUrl.nullable().optional(),
   selfiePublic: z.boolean().optional().default(false),
 });
 
