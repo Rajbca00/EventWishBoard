@@ -442,18 +442,23 @@ button,
 /* Showcase drift. A handful of wishes cannot scroll as a ribbon, so each card
    wanders its own slow path instead. Translations are percentages of the card
    itself, so the motion stays proportional from a laptop to a 65" TV. */
+/* `--drift` scales the whole path. The venue board sets it low so a card
+   breathes inside the cell it was given instead of wandering out of it. */
 @keyframes wander {
   0% {
     transform: translate3d(0, 0, 0) rotate(var(--tilt, 0deg));
   }
   25% {
-    transform: translate3d(3%, -4%, 0) rotate(calc(var(--tilt, 0deg) + 1.6deg));
+    transform: translate3d(calc(3% * var(--drift, 1)), calc(-4% * var(--drift, 1)), 0)
+      rotate(calc(var(--tilt, 0deg) + 1.6deg * var(--drift, 1)));
   }
   50% {
-    transform: translate3d(-2%, -6.5%, 0) rotate(var(--tilt, 0deg));
+    transform: translate3d(calc(-2% * var(--drift, 1)), calc(-6.5% * var(--drift, 1)), 0)
+      rotate(var(--tilt, 0deg));
   }
   75% {
-    transform: translate3d(-3.5%, -2.5%, 0) rotate(calc(var(--tilt, 0deg) - 1.6deg));
+    transform: translate3d(calc(-3.5% * var(--drift, 1)), calc(-2.5% * var(--drift, 1)), 0)
+      rotate(calc(var(--tilt, 0deg) - 1.6deg * var(--drift, 1)));
   }
   100% {
     transform: translate3d(0, 0, 0) rotate(var(--tilt, 0deg));
