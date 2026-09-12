@@ -3,24 +3,21 @@
 import { motion } from 'motion/react';
 import SceneBackground from '@/components/wall/SceneBackground';
 import BrandMark from '@/components/ui/BrandMark';
-import WishCard from '@/components/wall/WishCard';
 import { BRAND } from '@/lib/env';
 import type { Theme } from '@/lib/themes';
-import type { GuestPayload, PublicWish } from '@/lib/types';
+import type { GuestPayload } from '@/lib/types';
 
 interface Props {
   theme: Theme;
   event: GuestPayload['event'];
-  wall: PublicWish[];
   reason: 'closed' | 'full';
 }
 
 /**
- * Shown once the event expires or fills up. The wishes already collected stay
- * visible — the wall becomes a keepsake rather than a dead link.
+ * Shown once the event expires or fills up. The closed state keeps the screen
+ * as a calm thank-you and avoids showing the collected wishes again.
  */
-export default function ClosedScreen({ theme, event, wall, reason }: Props) {
-  const highlights = wall.slice(-3).reverse();
+export default function ClosedScreen({ theme, event, reason }: Props) {
 
   return (
     <div className="relative isolate flex min-h-[100dvh] flex-col overflow-hidden">
@@ -49,20 +46,6 @@ export default function ClosedScreen({ theme, event, wall, reason }: Props) {
               : 'Thank you to everyone who left a little love. The messages are safely with the hosts.'}
           </p>
 
-          {highlights.length > 0 && (
-            <div className="mt-10 space-y-3">
-              {highlights.map((wish, index) => (
-                <motion.div
-                  key={wish.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + index * 0.12, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <WishCard wish={wish} variant="preview" className="mx-auto" />
-                </motion.div>
-              ))}
-            </div>
-          )}
         </motion.div>
       </div>
 

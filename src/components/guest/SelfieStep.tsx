@@ -52,7 +52,7 @@ function VisibilityChoice({ selected, icon, title, detail, onSelect }: ChoicePro
         className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors ${
           selected ? 'border-transparent' : 'border-[var(--card-line)]'
         }`}
-        style={selected ? { background: 'var(--accent)' } : undefined}
+        style={selected ? { background: 'var(--accent-fill, var(--accent))' } : undefined}
       >
         {selected && (
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -278,7 +278,7 @@ export default function SelfieStep({
       )}
 
       {error && (
-        <p className="mt-4 text-center text-[0.85rem]" style={{ color: 'var(--accent-2)' }} role="alert">
+        <p className="mt-4 text-center text-[0.85rem]" style={{ color: 'var(--notice, var(--accent-2))' }} role="alert">
           {error}
         </p>
       )}

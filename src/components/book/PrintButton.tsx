@@ -10,7 +10,7 @@ export default function PrintButton() {
       type="button"
       onClick={() => window.print()}
       className="inline-flex h-11 items-center gap-2 rounded-full px-6 text-[0.88rem] font-medium text-white transition-transform active:scale-[0.97]"
-      style={{ background: 'linear-gradient(135deg,var(--accent),var(--accent-2))' }}
+      style={{ background: 'linear-gradient(135deg,var(--accent-fill,var(--accent)),var(--accent-2))' }}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path

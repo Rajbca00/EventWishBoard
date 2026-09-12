@@ -110,7 +110,7 @@ export default function PreviewStep({
       {error && (
         <p
           className="mt-5 text-center text-[0.88rem]"
-          style={{ color: 'var(--accent-2)' }}
+          style={{ color: 'var(--notice, var(--accent-2))' }}
           role="alert"
         >
           {error}

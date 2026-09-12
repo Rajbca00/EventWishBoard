@@ -86,15 +86,15 @@ export default function IdentityStep({
           className={cn(
             'glass flex w-full items-center gap-3 rounded-2xl px-5 py-4 text-left',
             'transition-colors duration-200',
-            isAnonymous && 'bg-white/85',
+            isAnonymous && 'bg-[var(--tint-strong)]',
           )}
         >
           <span
             className={cn(
               'flex size-6 shrink-0 items-center justify-center rounded-lg border transition-all duration-200',
-              isAnonymous ? 'border-transparent' : 'border-[var(--card-line)] bg-white/60',
+              isAnonymous ? 'border-transparent' : 'border-[var(--card-line)] bg-[var(--tint)]',
             )}
-            style={isAnonymous ? { background: 'var(--accent)' } : undefined}
+            style={isAnonymous ? { background: 'var(--accent-fill, var(--accent))' } : undefined}
           >
             {isAnonymous && (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>

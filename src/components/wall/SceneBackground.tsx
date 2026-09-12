@@ -14,6 +14,11 @@ interface Props {
   intensity?: Intensity;
   seed?: string;
   className?: string;
+  /**
+   * The venue screen keeps its ambience even when the machine driving it has
+   * reduced motion switched on — it is signage, not someone's own screen.
+   */
+  forceMotion?: boolean;
 }
 
 type Motion = 'lift' | 'tumble' | 'drift';
@@ -23,6 +28,8 @@ const MOTION_FOR: Partial<Record<DecorName, Motion>> = {
   balloon: 'lift',
   heart: 'lift',
   cake: 'tumble',
+  cupcake: 'tumble',
+  brownie: 'tumble',
   donut: 'tumble',
   macaron: 'tumble',
   cookie: 'tumble',
@@ -51,8 +58,16 @@ interface Piece {
  * soft colour blooms, drifting decor and a gentle parallax response.
  * Positions come from a seeded RNG so server and client render identically.
  */
-export default function SceneBackground({ theme, intensity = 'ambient', seed = 'wall', className }: Props) {
-  const { rich, reducedMotion } = useDeviceCapability();
+export default function SceneBackground({
+  theme,
+  intensity = 'ambient',
+  seed = 'wall',
+  className,
+  forceMotion = false,
+}: Props) {
+  const capability = useDeviceCapability();
+  const reducedMotion = capability.reducedMotion && !forceMotion;
+  const rich = forceMotion ? !capability.lowPower : capability.rich;
   const parallax = useParallax(!reducedMotion);
 
   const pieces = useMemo<Piece[]>(() => {
@@ -126,7 +141,7 @@ export default function SceneBackground({ theme, intensity = 'ambient', seed = '
       <div
         className="absolute inset-x-0 top-0 h-1/2 opacity-60"
         style={{
-          background: 'linear-gradient(to bottom, rgb(255 255 255 / 0.55), transparent)',
+          background: 'linear-gradient(to bottom, var(--sweep, rgb(255 255 255 / 0.55)), transparent)',
         }}
       />
 
@@ -165,6 +180,7 @@ export default function SceneBackground({ theme, intensity = 'ambient', seed = '
                 className={rich ? `animate-${piece.motion}` : undefined}
                 style={{
                   animationDelay: `-${piece.delay}s`,
+                  ['--decor-delay' as string]: `-${piece.delay}s`,
                   ['--decor-duration' as string]: `${piece.duration}s`,
                 }}
               >
@@ -196,6 +212,7 @@ export default function SceneBackground({ theme, intensity = 'ambient', seed = '
                   background: 'var(--gold)',
                   boxShadow: '0 0 8px 2px rgb(255 255 255 / 0.6)',
                   animationDelay: `${delay}s`,
+                  ['--twinkle-delay' as string]: `${delay}s`,
                 }}
               />
             );

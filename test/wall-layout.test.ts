@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { fitBoard, boardWishes, BOARD_LIMIT } from '@/lib/wall-layout';
+import {
+  fitBoard,
+  boardWishes,
+  BOARD_LIMIT,
+  messageScaleFor,
+  truncateMessage,
+  messageBudgetFor,
+  readableCapacity,
+} from '@/lib/wall-layout';
 
 /*
  * The screen sizes a venue board actually runs on, with the header and footer
@@ -19,11 +27,18 @@ const layoutFor = (screen: keyof typeof SCREENS, count: number) =>
 describe('how many wishes reach the board', () => {
   const wishes = Array.from({ length: 40 }, (_, i) => i);
 
-  it('shows the newest fifteen once there are more than that', () => {
+  it('shows the newest sixteen once there are more than that', () => {
     const shown = boardWishes(wishes);
     expect(shown).toHaveLength(BOARD_LIMIT);
     expect(shown.at(-1)).toBe(39);
-    expect(shown[0]).toBe(25);
+    expect(shown[0]).toBe(24);
+  });
+
+  it('respects a custom event wall limit', () => {
+    const shown = boardWishes(wishes, 10);
+    expect(shown).toHaveLength(10);
+    expect(shown[0]).toBe(30);
+    expect(shown.at(-1)).toBe(39);
   });
 
   it('shows everything when there are fewer', () => {
@@ -226,6 +241,94 @@ describe('how much of a message a card can hold', () => {
         expect(used).toBeLessThanOrEqual(l.cardHeight);
       }
     }
+  });
+});
+
+describe('message scaling and clipping', () => {
+  it('shrinks longer messages before they crowd the card', () => {
+    expect(messageScaleFor('Short wish', 20)).toBeGreaterThan(0.9);
+    expect(messageScaleFor('This is a much longer wish message that should scale down on a crowded board', 20)).toBeLessThan(1);
+    expect(messageScaleFor('Very long message repeated many times', 20)).toBeLessThan(
+      messageScaleFor('Short wish', 20),
+    );
+  });
+
+  it('adds an ellipsis when the message outgrows the card', () => {
+    expect(truncateMessage('This is a very long wish that should be clipped for the live wall board', 70)).toMatch(/…$/);
+    expect(truncateMessage('Short wish', 70)).toBe('Short wish');
+  });
+
+  it('cuts at a word, never mid-word', () => {
+    const cut = truncateMessage('Wishing you both a lifetime of happiness and laughter', 30);
+    expect(cut).toBe('Wishing you both a lifetime…');
+    expect(cut.length).toBeLessThanOrEqual(30);
+  });
+
+  it('does not leave a stray comma or dash before the ellipsis', () => {
+    expect(truncateMessage('Congratulations, both of you, truly', 18)).toBe('Congratulations…');
+  });
+
+  it('still cuts a single enormous word rather than overflowing', () => {
+    const cut = truncateMessage('a'.repeat(200), 40);
+    expect(cut.length).toBeLessThanOrEqual(40);
+    expect(cut.endsWith('…')).toBe(true);
+  });
+});
+
+describe('how much text a side-wall card can take', () => {
+  const layout = fitBoard({ width: 784, height: 736, count: 6 });
+
+  it('takes less beside a photo', () => {
+    expect(messageBudgetFor(layout, true, 19)).toBeLessThanOrEqual(messageBudgetFor(layout, false, 19));
+  });
+
+  it('takes more on a wider card', () => {
+    const wide = { ...layout, cardWidth: layout.cardWidth * 1.5 };
+    expect(messageBudgetFor(wide, false, 19)).toBeGreaterThan(messageBudgetFor(layout, false, 19));
+  });
+
+  it('never drops to a sliver', () => {
+    expect(messageBudgetFor({ ...layout, cardWidth: 10 }, true, 19)).toBeGreaterThanOrEqual(24);
+  });
+});
+
+/*
+ * The side wall beside the spotlight holds as many cards as it can while every
+ * one stays at a readable size — at least 24px of message on a 1080p screen,
+ * where the monitor is read from two to five feet.
+ */
+describe('how many cards the side wall holds', () => {
+  const SIDES = {
+    '1920×1080': { width: 784, height: 736, floorPx: 24 },
+    '2560×1440': { width: 1045, height: 981, floorPx: 32 },
+    '1366×768': { width: 557, height: 511, floorPx: 18 },
+  };
+
+  for (const [screen, side] of Object.entries(SIDES)) {
+    it(`keeps every card readable at ${screen}`, () => {
+      const capacity = readableCapacity({ ...side, minCells: 4 });
+      expect(capacity).toBeGreaterThanOrEqual(1);
+      const layout = fitBoard({ width: side.width, height: side.height, count: Math.max(capacity, 4) });
+      expect(layout.messagePx).toBeGreaterThanOrEqual(side.floorPx);
+    });
+  }
+
+  it('fits a full wall of several cards on the primary 27" 1080p screen', () => {
+    expect(readableCapacity({ ...SIDES['1920×1080'], minCells: 4 })).toBeGreaterThanOrEqual(4);
+  });
+
+  it('keeps the same composition at 1440p rather than cramming more in', () => {
+    const at1080 = readableCapacity({ ...SIDES['1920×1080'], minCells: 4 });
+    const at1440 = readableCapacity({ ...SIDES['2560×1440'], minCells: 4 });
+    expect(at1440).toBe(at1080);
+  });
+
+  it('holds none in a space it has not measured yet', () => {
+    expect(readableCapacity({ width: 0, height: 0, floorPx: 24 })).toBe(0);
+  });
+
+  it('still holds one on a screen too small for its floor', () => {
+    expect(readableCapacity({ width: 120, height: 90, floorPx: 40 })).toBe(1);
   });
 });
 

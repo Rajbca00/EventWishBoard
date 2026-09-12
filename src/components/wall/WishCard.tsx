@@ -12,6 +12,8 @@ interface Props {
   style?: React.CSSProperties;
   /** Renders the media but skips the entry animation (used by the flying clone). */
   flat?: boolean;
+  messageScale?: number;
+  messageText?: string;
   /**
    * How a guest photo is shown on the venue board. A banner across the top
    * looks better, but on a small card it leaves room for about one line of the
@@ -25,6 +27,10 @@ function isEmoji(value: string): boolean {
   return !value.startsWith('/') && !value.startsWith('http');
 }
 
+export function visibleWishDecorations(wish: Pick<PublicWish, 'stickers' | 'gifs' | 'memes'>) {
+  return [...wish.gifs, ...wish.memes, ...wish.stickers].slice(0, 2);
+}
+
 export default function WishCard({
   wish,
   variant = 'wall',
@@ -32,13 +38,17 @@ export default function WishCard({
   style,
   flat = false,
   photoStyle = 'banner',
+  messageScale = 1,
+  messageText,
 }: Props) {
   const isPreview = variant === 'preview';
   const isLive = variant === 'live';
   const asAvatar = isLive && photoStyle === 'avatar' && Boolean(wish.selfieUrl);
-  // GIFs first, then memes: the animated pieces are the ones worth noticing.
-  const media = [...wish.gifs, ...wish.memes];
-  const stickers = wish.stickers;
+  const displayMessage = messageText ?? wish.message;
+  const visibleDecorations = visibleWishDecorations(wish);
+  const media = visibleDecorations.filter((value) => value.startsWith('/') || value.startsWith('http'));
+  const stickers = visibleDecorations.filter((value) => !value.startsWith('/') && !value.startsWith('http'));
+  const compactDecorations = visibleDecorations.length <= 2;
 
   return (
     <article
@@ -99,38 +109,41 @@ export default function WishCard({
 
       <p
         className={cn(
-          'font-display text-balance-pretty leading-snug text-[var(--ink)]',
+          // `overflow-wrap: anywhere` so one enormous unbroken word — a URL, a
+          // row of exclamation marks — wraps inside the card instead of
+          // pushing it wider than its cell.
+          'font-display text-balance-pretty leading-snug text-[var(--ink)] [overflow-wrap:anywhere]',
           isPreview && 'text-[1.15rem]',
-          isLive &&
-            'min-h-0 flex-1 overflow-hidden text-[length:var(--live-text,1.25rem)] leading-snug',
+          isLive && 'min-h-0 flex-1 overflow-hidden leading-[1.38]',
           !isPreview && !isLive && 'line-clamp-3 text-[0.86rem]',
         )}
         // A long wish is trimmed with an ellipsis at whatever number of lines
         // the card can actually hold, rather than a fixed count that overflows
-        // a short card and leaves a tall one half empty.
+        // a short card and leaves a tall one half empty. No transform here: a
+        // transformed text box is rasterised on its own layer, and on an
+        // ordinary 1x monitor that is visibly softer.
         style={
           isLive
             ? {
                 display: '-webkit-box',
                 WebkitBoxOrient: 'vertical',
                 WebkitLineClamp: 'var(--live-lines, 6)' as unknown as number,
+                fontSize: `calc(var(--live-text, 1.25rem) * ${messageScale})`,
               }
             : undefined
         }
       >
-        {wish.message}
+        {displayMessage}
       </p>
 
       {(media.length > 0 || stickers.length > 0) && (
-        // Wraps rather than scrolls: a guest may pick several, and a card that
-        // clipped the last one would look broken rather than full.
-        <div className={cn('flex flex-wrap items-center gap-2', isLive && 'shrink-0')}>
+        <div className={cn('flex items-center gap-1.5', compactDecorations && 'flex-nowrap', !compactDecorations && 'flex-wrap', isLive && 'shrink-0')}>
           {media.map((src) => (
             <span
               key={src}
               className={cn(
-                'relative shrink-0 overflow-hidden rounded-xl bg-white/55 ring-1 ring-white/60',
-                isPreview ? 'size-16' : isLive ? 'size-[3vw]' : 'size-9',
+                'relative shrink-0 overflow-hidden rounded-xl bg-[var(--tint)] ring-1 ring-[var(--card-line)]',
+                isPreview ? 'size-16' : isLive ? 'size-[calc(var(--live-text,1.25rem)*2)]' : 'size-9',
               )}
             >
               <Image src={src} alt="" fill sizes="64px" className="object-contain p-1" unoptimized />
@@ -142,7 +155,7 @@ export default function WishCard({
                 key={value}
                 className={cn(
                   'shrink-0 leading-none',
-                  isPreview ? 'text-3xl' : isLive ? 'text-[2vw]' : 'text-xl',
+                  isPreview ? 'text-3xl' : isLive ? 'text-[length:calc(var(--live-text,1.25rem)*1.35)]' : 'text-xl',
                 )}
                 aria-hidden
               >
@@ -151,7 +164,10 @@ export default function WishCard({
             ) : (
               <span
                 key={value}
-                className={cn('relative shrink-0', isPreview ? 'size-9' : isLive ? 'size-[2vw]' : 'size-7')}
+                className={cn(
+                  'relative shrink-0',
+                  isPreview ? 'size-9' : isLive ? 'size-[calc(var(--live-text,1.25rem)*1.6)]' : 'size-7',
+                )}
               >
                 <Image src={value} alt="" fill sizes="36px" className="object-contain" unoptimized />
               </span>

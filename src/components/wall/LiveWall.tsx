@@ -1,16 +1,26 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import WishCard from './WishCard';
+import WishCard, { visibleWishDecorations } from './WishCard';
+import SpotlightWish from './SpotlightWish';
 import SceneBackground from './SceneBackground';
 import { BrandGlyph } from '@/components/ui/BrandMark';
 import { celebrate } from '@/lib/confetti';
 import { usePrefersReducedMotion } from '@/lib/hooks';
-import { seededRandom } from '@/lib/utils';
-import { BOARD_LIMIT, boardWishes, fitBoard, type BoardLayout } from '@/lib/wall-layout';
+import { cn } from '@/lib/utils';
+import {
+  BOARD_LIMIT,
+  fitBoard,
+  messageBudgetFor,
+  readableCapacity,
+  truncateMessage,
+} from '@/lib/wall-layout';
+import { dwellFor, initRotation, rotationReducer, spotlightTier } from '@/lib/live-rotation';
 import type { Theme } from '@/lib/themes';
-import type { PublicWish } from '@/lib/types';
+import type { PublicWish, ThemeId } from '@/lib/types';
+
+export type QrMode = 'full' | 'compact' | 'hidden';
 
 interface Props {
   theme: Theme;
@@ -18,24 +28,75 @@ interface Props {
   hosts: string;
   guestUrl: string;
   initialWishes: PublicWish[];
+  /** How many of the newest wishes the screen rotates through. */
+  displayLimit?: number;
   /** How often to look for new wishes, in seconds. */
   refreshSeconds?: number;
   /**
-   * Keep the board drifting even if the machine asks for reduced motion.
+   * Keep the screen moving even if the machine asks for reduced motion.
    * Defaults on: this is a display an operator set up, not a page someone
    * navigated to. ?motion=off turns it back off.
    */
   forceMotion?: boolean;
+  /** ?qr=small shrinks the code; ?qr=off hides it when the table has its own. */
+  qrMode?: QrMode;
+  /** ?debug=1 shows counts, timings and layout for setting the screen up. */
+  debug?: boolean;
+}
+
+const SUBTITLES: Record<ThemeId, string> = {
+  wedding: 'Our Wedding Wish Wall',
+  engagement: 'Our Engagement Wish Wall',
+  birthday: 'Birthday Wish Wall',
+  celebration: 'Celebration Wish Wall',
+  // A colour scheme rather than an occasion, so it says nothing it cannot know.
+  chocolate: 'Our Wish Wall',
+};
+
+const QR_ORDER: QrMode[] = ['full', 'compact', 'hidden'];
+
+/** Side-wall cards are sized as though there were at least this many. */
+const SIDE_MIN_CELLS = 4;
+/**
+ * A card's decoration row is about two lines of its message tall — a chip is
+ * twice the type size. Without reserving it, a long decorated wish was clamped
+ * for a box it no longer had and cut mid-line with no ellipsis.
+ */
+const DECORATION_LINES = 2;
+const SIDE_MAX = 12;
+
+/*
+ * Screen-relative sizes, in px, for the numbers the layout arithmetic needs.
+ * The smallest side-wall type is 2.2% of the screen height: about 24px on a
+ * 1080p panel, which is comfortable on a 27" monitor from four or five feet.
+ */
+const sideFloor = (viewportHeight: number) => Math.round(Math.min(40, Math.max(18, viewportHeight * 0.022)));
+const sideGap = (viewportHeight: number) => Math.round(Math.min(36, Math.max(12, viewportHeight * 0.02)));
+/** Matches the live card's `p-[clamp(0.6rem,1vw,1.4rem)]`. */
+const cardPadding = (viewportWidth: number) => Math.min(22.4, Math.max(9.6, viewportWidth * 0.01));
+
+function toggleFullscreen() {
+  if (typeof document === 'undefined') return;
+  if (document.fullscreenElement) {
+    void document.exitFullscreen().catch(() => {});
+  } else {
+    void document.documentElement.requestFullscreen?.().catch(() => {});
+  }
 }
 
 /**
- * The venue screen: a projector or TV showing wishes as they arrive.
+ * The reception screen: a monitor by the dessert table showing wishes as they
+ * arrive.
  *
- * Two things make this different from the guest Wish Wall. It never stops
- * moving, because it is ambient — people glance at it across a room all
- * evening. And it must survive hours unattended, so the motion is CSS on the
- * compositor rather than JS animation, and polling replaces the whole list
- * instead of accumulating DOM.
+ * One wish at a time in the spotlight, large enough to read from a few feet
+ * away, beside a wall of recent ones. It runs for hours unattended, so every
+ * moving part is CSS on the compositor, the text itself never moves (moving
+ * text on an ordinary 1x monitor is visibly soft), and polling replaces the
+ * list rather than accumulating DOM.
+ *
+ * For whoever sets it up: F toggles fullscreen, Q cycles the QR code between
+ * large, small and hidden, D shows the setup details, → skips to the next wish.
+ * Hints appear only while the mouse is moving, and the cursor hides itself.
  */
 export default function LiveWall({
   theme,
@@ -43,23 +104,30 @@ export default function LiveWall({
   hosts,
   guestUrl,
   initialWishes,
+  displayLimit = BOARD_LIMIT,
   refreshSeconds = 30,
   forceMotion = true,
+  qrMode: initialQrMode = 'full',
+  debug = false,
 }: Props) {
   const prefersReduced = usePrefersReducedMotion();
-  // A venue display is not someone's personal screen: if the laptop driving the
-  // projector has reduced motion on for its owner's comfort, the board should
-  // still be allowed to drift. ?motion=on makes that an explicit choice.
   const reducedMotion = prefersReduced && !forceMotion;
+
   const [wishes, setWishes] = useState<PublicWish[]>(initialWishes);
-  const [arrivals, setArrivals] = useState<PublicWish[]>([]);
-  const [space, setSpace] = useState({ width: 0, height: 0 });
-  const [qr, setQr] = useState<string | null>(null);
+  const [rotation, dispatch] = useReducer(rotationReducer, undefined, () =>
+    initRotation(initialWishes, displayLimit),
+  );
+  const [side, setSide] = useState({ width: 0, height: 0, viewportWidth: 1920, viewportHeight: 1080, dpr: 1 });
+  const [qrReady, setQrReady] = useState(false);
+  const [qrMode, setQrMode] = useState<QrMode>(initialQrMode);
   const [offline, setOffline] = useState(false);
+  const [lastSync, setLastSync] = useState<number | null>(null);
+  const [showDebug, setShowDebug] = useState(debug);
+  const [pointerActive, setPointerActive] = useState(false);
 
   const seen = useRef(new Set(initialWishes.map((wish) => wish.id)));
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
+  const sideRef = useRef<HTMLDivElement | null>(null);
 
   /* -------------------------------------------------------------- QR code */
 
@@ -69,13 +137,15 @@ export default function LiveWall({
     QRCode.toCanvas(canvas, guestUrl, {
       width: 512,
       margin: 1,
-      color: { dark: '#4a2c33ff', light: '#ffffffff' },
+      // Always dark on white, whatever the theme: the dark theme's cream ink
+      // would make a code that does not scan.
+      color: { dark: '#2a1810ff', light: '#ffffffff' },
     })
       .then(() => {
         canvas.removeAttribute('style');
-        setQr(guestUrl);
+        setQrReady(true);
       })
-      .catch(() => setQr(null));
+      .catch(() => setQrReady(false));
   }, [guestUrl]);
 
   /* -------------------------------------------------------------- polling */
@@ -89,68 +159,76 @@ export default function LiveWall({
       }
       const data = (await response.json()) as { wall: PublicWish[] };
       setOffline(false);
+      setLastSync(Date.now());
 
       const fresh = data.wall.filter((wish) => !seen.current.has(wish.id));
       data.wall.forEach((wish) => seen.current.add(wish.id));
 
       setWishes(data.wall);
+      dispatch({ type: 'sync', wishes: data.wall, limit: displayLimit });
       if (fresh.length) {
-        setArrivals(fresh.slice(-3));
-        celebrate({ colors: theme.confetti, intensity: 'gentle', origin: { x: 0.5, y: 0.2 } });
+        celebrate({ colors: theme.confetti, intensity: 'gentle', origin: { x: 0.36, y: 0.35 } });
       }
     } catch {
       // A venue's wifi will drop. Keep showing what we have and try again.
       setOffline(true);
     }
-  }, [eventId, theme.confetti]);
+  }, [eventId, theme.confetti, displayLimit]);
 
   useEffect(() => {
     const timer = window.setInterval(refresh, refreshSeconds * 1000);
     return () => window.clearInterval(timer);
   }, [refresh, refreshSeconds]);
 
-  // Clear the "just arrived" banner a few seconds after it appears.
+  /* -------------------------------------------------------------- spotlight */
+
+  const byId = useMemo(() => new Map(rotation.pool.map((wish) => [wish.id, wish])), [rotation.pool]);
+  const spotlight = rotation.spotlightId ? (byId.get(rotation.spotlightId) ?? null) : null;
+  const previous = rotation.previousId ? (byId.get(rotation.previousId) ?? null) : null;
+  const justArrived = spotlight ? rotation.fresh.includes(spotlight.id) : false;
+  const dwell = spotlight ? dwellFor(spotlight, justArrived) : 0;
+
   useEffect(() => {
-    if (!arrivals.length) return;
-    const timer = window.setTimeout(() => setArrivals([]), 9000);
+    if (!rotation.spotlightId || rotation.pool.length < 2) return;
+    const timer = window.setTimeout(() => dispatch({ type: 'advance' }), dwell);
     return () => window.clearTimeout(timer);
-  }, [arrivals]);
+  }, [rotation.spotlightId, rotation.turn, rotation.pool.length, dwell]);
 
-  /* -------------------------------------------------------------- layout */
-
-  /*
-   * The board shows the newest handful and nothing else. Older wishes are not
-   * lost — they are in the dashboard, the memory book and the archive — but a
-   * screen across a room can only hold so many before each one is too small to
-   * read, and a marquee that scrolls them past means a guest who walks up has
-   * to wait to see their own.
-   */
-  const visible = useMemo(() => boardWishes(wishes, BOARD_LIMIT), [wishes]);
+  /* -------------------------------------------------------------- side wall */
 
   /*
-   * Measure the space the cards actually have rather than guessing it in vw.
-   * A projector, a 65" TV and a laptop all land here with different aspect
-   * ratios, and the previous vw-based sizing clipped cards off the bottom of
-   * anything that was not roughly 16:9.
+   * Measure the space the side wall actually has, and from it how many cards
+   * fit while every one stays readable. The capacity goes to the rotation,
+   * which keeps each card in the tile it already had.
    */
   const remember = useCallback((width: number, height: number) => {
-    setSpace((previous) =>
-      Math.abs(previous.width - width) < 1 && Math.abs(previous.height - height) < 1
-        ? previous
-        : { width, height },
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
+    setSide((current) =>
+      Math.abs(current.width - width) < 1 &&
+      Math.abs(current.height - height) < 1 &&
+      current.viewportWidth === viewportWidth &&
+      current.viewportHeight === viewportHeight
+        ? current
+        : { width, height, viewportWidth, viewportHeight, dpr },
     );
+    dispatch({
+      type: 'capacity',
+      capacity: readableCapacity({
+        width,
+        height,
+        floorPx: sideFloor(viewportHeight),
+        max: SIDE_MAX,
+        minCells: SIDE_MIN_CELLS,
+        gap: sideGap(viewportHeight),
+      }),
+    });
   }, []);
 
-  /*
-   * Measured as soon as the element exists, rather than waiting for the first
-   * ResizeObserver callback. The observer is the right tool for a projector
-   * being re-plugged or a window being dragged between screens, but its first
-   * delivery is tied to the rendering loop — and a board that shows nothing
-   * until that arrives is a blank screen at a wedding.
-   */
-  const attachBoard = useCallback(
+  const attachSide = useCallback(
     (element: HTMLDivElement | null) => {
-      boardRef.current = element;
+      sideRef.current = element;
       if (!element) return;
       const box = element.getBoundingClientRect();
       remember(box.width, box.height);
@@ -159,185 +237,293 @@ export default function LiveWall({
   );
 
   useEffect(() => {
-    const element = boardRef.current;
+    const element = sideRef.current;
     if (!element) return;
 
-    const observer = new ResizeObserver(([entry]) => {
-      const box = entry?.contentRect;
-      if (box) remember(box.width, box.height);
-    });
+    const measure = () => {
+      const box = element.getBoundingClientRect();
+      remember(box.width, box.height);
+    };
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
 
-    const measure = () => {
-      const now = element.getBoundingClientRect();
-      remember(now.width, now.height);
-    };
-
-    /*
-     * Measure again now that layout has settled. The ref callback runs during
-     * commit, when the flex row heights above this element are not final, so
-     * its reading can be short — and a board that believes it has half the room
-     * it really has lays fifteen wishes out as a strip of tiny cards. The
-     * retries cover browsers where the observer's first delivery is late.
-     */
+    // The ref callback measures during commit, before the rows above have
+    // settled; measure again once they have, and on every resize after.
     measure();
     const retries = [0, 200, 800].map((delay) => window.setTimeout(measure, delay));
     window.addEventListener('resize', measure);
+    document.addEventListener('fullscreenchange', measure);
 
     return () => {
       observer.disconnect();
       retries.forEach(window.clearTimeout);
       window.removeEventListener('resize', measure);
+      document.removeEventListener('fullscreenchange', measure);
     };
   }, [remember]);
 
-  const layout: BoardLayout = useMemo(
-    () => fitBoard({ width: space.width, height: space.height, count: visible.length }),
-    [space.width, space.height, visible.length],
-  );
-
-  /** A slow, small drift so the board is alive without anything leaving its cell. */
-  const drifts = useMemo(
+  const gap = sideGap(side.viewportHeight);
+  const sideLayout = useMemo(
     () =>
-      visible.map((wish) => {
-        const random = seededRandom(`board:${eventId}:${wish.id}`);
-        return {
-          duration: 18 + random() * 14,
-          delay: -random() * 20,
-          tilt: (random() - 0.5) * 2.4,
-        };
+      fitBoard({
+        width: side.width,
+        height: side.height,
+        count: Math.max(rotation.slots.length, SIDE_MIN_CELLS),
+        gap,
       }),
-    [visible, eventId],
+    [side.width, side.height, rotation.slots.length, gap],
   );
+  const sideColumns = Math.min(sideLayout.columns, Math.max(1, rotation.slots.length));
+  const padding = cardPadding(side.viewportWidth);
+  const showInvitation = rotation.pool.length <= 1;
+
+  /* -------------------------------------------------------------- kiosk */
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === 'f') toggleFullscreen();
+      else if (key === 'q') setQrMode((mode) => QR_ORDER[(QR_ORDER.indexOf(mode) + 1) % QR_ORDER.length]!);
+      else if (key === 'd') setShowDebug((value) => !value);
+      else if (key === 'arrowright' || key === ' ') {
+        event.preventDefault();
+        dispatch({ type: 'advance' });
+      }
+    };
+
+    // The cursor and the setup hints only exist while someone is using the mouse.
+    let idle: number | undefined;
+    const onMove = () => {
+      setPointerActive(true);
+      window.clearTimeout(idle);
+      idle = window.setTimeout(() => setPointerActive(false), 2500);
+    };
+
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mousemove', onMove, { passive: true });
+    window.addEventListener('dblclick', toggleFullscreen);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('dblclick', toggleFullscreen);
+      window.clearTimeout(idle);
+    };
+  }, []);
+
+  /* -------------------------------------------------------------- render */
+
+  const qrVisible = qrMode !== 'hidden';
+  // Long names step down so the couple never wraps into a third line.
+  const nameSize = `clamp(2rem, min(4.9vw, 8.8vh, ${(118 / Math.max(18, hosts.length)).toFixed(2)}vw), 7.5rem)`;
+  const qrSize = qrMode === 'compact' ? 'clamp(4.25rem, 9.5vh, 8rem)' : 'clamp(6rem, 17vh, 15rem)';
 
   return (
     <div
-      className={`relative isolate flex h-dvh w-screen flex-col overflow-hidden bg-[var(--bg-1)] ${
-        forceMotion ? 'force-motion' : ''
-      }`}
+      className={cn(
+        'fixed inset-0 isolate flex flex-col overflow-hidden bg-[var(--bg-1)] font-body',
+        'px-[clamp(1.25rem,3.2vw,4.5rem)] pb-[clamp(0.6rem,1.9vh,2rem)] pt-[clamp(1rem,3.4vh,3rem)]',
+        forceMotion && 'force-motion',
+        !pointerActive && 'cursor-none',
+      )}
+      style={{
+        /*
+         * The bundled emoji font sits after each text face and before the
+         * system's: text still comes from Playfair and Jakarta, and an emoji
+         * the display machine cannot draw comes from Noto instead of a box.
+         */
+        ['--font-display' as string]: 'var(--font-playfair), var(--font-noto-emoji), Georgia, serif',
+        ['--font-body' as string]:
+          'var(--font-jakarta), var(--font-noto-emoji), ui-sans-serif, system-ui, sans-serif',
+      }}
     >
-      <SceneBackground theme={theme} intensity="full" seed={`live:${eventId}`} />
+      <SceneBackground theme={theme} intensity="full" seed={`live:${eventId}`} forceMotion={forceMotion} />
 
       {/* ------------------------------------------------------------ header */}
-      <header className="relative z-30 flex shrink-0 items-start justify-between gap-8 px-[3vw] py-[2vh]">
-        <div>
-          <p className="text-[length:clamp(0.6rem,1vw,1.15rem)] uppercase tracking-[0.28em] text-[var(--ink-soft)]">
-            {theme.emoji} Wishes for
-          </p>
-          <h1 className="mt-2 font-display text-[length:clamp(1.5rem,3.6vw,4.2rem)] leading-none tracking-tight text-[var(--ink)]">
+      <header className="relative z-30 flex shrink-0 items-center justify-between gap-[3vw]">
+        <div className="min-w-0">
+          <h1
+            className="line-clamp-2 font-display font-medium leading-[1.04] tracking-[-0.02em] text-[var(--ink)]"
+            style={{ fontSize: nameSize, textWrap: 'balance' }}
+          >
             {hosts}
           </h1>
-          <p className="mt-2 text-[length:clamp(0.78rem,1.05vw,1.4rem)] text-[var(--ink-soft)]">
-            {wishes.length} {wishes.length === 1 ? 'wish' : 'wishes'} and counting
-            {wishes.length > BOARD_LIMIT && (
-              <span className="opacity-70"> · showing the latest {BOARD_LIMIT}</span>
+          <p
+            className="mt-[clamp(0.45rem,1.3vh,1.1rem)] flex items-center gap-[0.9em] font-body font-medium uppercase tracking-[0.34em] text-[var(--ink-soft)]"
+            style={{ fontSize: 'clamp(0.72rem, min(1.02vw, 1.85vh), 1.45rem)' }}
+          >
+            <span className="h-px w-[3em] bg-[var(--gold)]" aria-hidden />
+            {SUBTITLES[theme.id] ?? 'Wish Wall'}
+            <svg width="0.7em" height="0.7em" viewBox="0 0 10 10" className="text-[var(--gold)]" fill="currentColor" aria-hidden>
+              <path d="M5 0 10 5 5 10 0 5Z" />
+            </svg>
+          </p>
+        </div>
+
+        <div
+          hidden={!qrVisible}
+          className="flex shrink-0 items-center gap-[clamp(0.75rem,1.3vw,1.6rem)] rounded-[clamp(1rem,1.4vw,1.9rem)] border border-[var(--card-line)] bg-[var(--card-solid)] p-[clamp(0.55rem,1vw,1.3rem)] pr-[clamp(0.9rem,1.6vw,2rem)] shadow-[0_24px_60px_-38px_rgb(63_34_15/0.55)]"
+        >
+          {/* Sized by this wrapper, not the canvas: the QR library writes an
+              inline size onto the canvas, and the effect above strips it, so
+              an inline size there left the code at its full 512px. */}
+          <span className="block shrink-0" style={{ width: qrSize, height: qrSize }}>
+            <canvas
+              ref={canvasRef}
+              className="block size-full rounded-[0.55rem] [image-rendering:pixelated]"
+              aria-label="QR code to leave a wish"
+              role="img"
+            />
+          </span>
+          <p
+            className="font-display leading-[1.2] text-[var(--ink)]"
+            style={{
+              fontSize:
+                qrMode === 'compact'
+                  ? 'clamp(0.85rem, min(1.05vw, 1.9vh), 1.5rem)'
+                  : 'clamp(1rem, min(1.45vw, 2.6vh), 2.2rem)',
+            }}
+          >
+            Scan to leave
+            <br />
+            your wish <span aria-hidden>✨</span>
+            {!qrReady && (
+              <span className="mt-1 block font-body text-[0.5em] text-[var(--ink-soft)]">{guestUrl}</span>
             )}
           </p>
         </div>
-
-        <div className="flex items-center gap-[1.4vw] rounded-[1.4vw] bg-white/70 px-[1.4vw] py-[1.2vh] backdrop-blur-md">
-          <canvas ref={canvasRef} className="size-[clamp(3.25rem,7vw,8rem)] rounded-lg" aria-hidden />
-          <div>
-            <p className="hidden font-display text-[length:clamp(0.8rem,1.5vw,2rem)] leading-tight text-[var(--ink)] sm:block">
-              Scan to add
-              <br />
-              your wish
-            </p>
-            {!qr && <p className="mt-1 text-[0.9vw] text-[var(--ink-soft)]">{guestUrl}</p>}
-          </div>
-        </div>
       </header>
 
-      {/* ------------------------------------------------------------ the board */}
-      {/*
-        * The padding is the safe area: the header band at the top and the
-        * footer band at the bottom. Cards are laid out inside what is left, so
-        * one can never slide under the title or off the bottom edge.
-        */}
-      <div className="relative z-10 min-h-0 flex-1 px-[3vw] pb-[1vh]">
-        <div ref={attachBoard} className="relative h-full w-full">
-        {visible.length > 0 && layout.rows > 0 && (
-          <div
-            className="grid h-full w-full place-items-center"
-            style={{
-              gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`,
-              gridTemplateRows: `repeat(${layout.rows}, minmax(0, 1fr))`,
-              gap: `${layout.gap}px`,
-              // Every card reads off these, so the whole board scales together.
-              ['--live-text' as string]: `${layout.messagePx}px`,
-              ['--live-meta' as string]: `${layout.metaPx}px`,
-              ['--live-photo' as string]: `${layout.photoPx}px`,
-            }}
-          >
-            {visible.map((wish, index) => {
-              const drift = drifts[index]!;
-              return (
+      {/* ------------------------------------------------------------ stage */}
+      <main
+        className="live-stage relative z-10 mt-[clamp(0.75rem,2.8vh,2.5rem)] min-h-0 flex-1"
+        style={{ gap: 'clamp(1rem, 1.9vw, 2.75rem)' }}
+      >
+        <SpotlightWish
+          current={spotlight}
+          previous={reducedMotion ? null : previous}
+          justArrived={justArrived}
+          emptyTitle="Your wishes will appear here"
+          emptyHint={qrVisible ? 'Scan the code to leave the very first one ✨' : 'Leave the very first one ✨'}
+        />
+
+        <div ref={attachSide} className="relative min-h-0">
+          {showInvitation ? (
+            <div className="flex h-full items-center justify-center">
+              <div
+                className="live-tile-in flex max-w-[34rem] flex-col items-center gap-[clamp(0.6rem,1.6vh,1.25rem)] rounded-[clamp(1rem,1.6vw,2rem)] border border-dashed border-[var(--gold)]/55 bg-[var(--card-solid)]/75 px-[clamp(1.25rem,3vw,3.5rem)] py-[clamp(1.25rem,4vh,3.5rem)] text-center"
+              >
+                <svg width="1.1em" height="1.1em" viewBox="0 0 10 10" className="text-[var(--gold)]" fill="currentColor" style={{ fontSize: 'clamp(0.9rem,1.2vw,1.5rem)' }} aria-hidden>
+                  <path d="M5 0 10 5 5 10 0 5Z" />
+                </svg>
+                <p className="font-display text-[var(--ink)]" style={{ fontSize: 'clamp(1.3rem, min(2.1vw, 3.8vh), 3rem)', lineHeight: 1.2 }}>
+                  Leave a wish for {theme.id === 'wedding' ? 'the happy couple' : hosts}
+                </p>
+                <p className="font-display italic text-[var(--ink-soft)]" style={{ fontSize: 'clamp(0.95rem, min(1.3vw, 2.4vh), 1.9rem)', lineHeight: 1.35 }}>
+                  {qrVisible ? 'Scan the code above' : 'Scan the QR code nearby'} — your message will appear here in
+                  moments.
+                </p>
+              </div>
+            </div>
+          ) : (
+            sideLayout.rows > 0 && (
+              <div className="flex h-full w-full items-center justify-center">
                 <div
-                  key={wish.id}
-                  className="wander flex items-center justify-center"
+                  className="flex flex-wrap content-center justify-center"
                   style={{
-                    width: layout.cardWidth,
-                    height: layout.cardHeight,
-                    ['--live-lines' as string]: String(
-                      wish.selfieUrl ? layout.linesWithPhoto : layout.lines,
-                    ),
-                    ['--tilt' as string]: `${drift.tilt}deg`,
-                    ['--wander-duration' as string]: `${drift.duration}s`,
-                    // A small fraction of the full drift, so a card breathes
-                    // in place instead of wandering out of its cell.
-                    ['--drift' as string]: '0.35',
-                    animationDelay: `${drift.delay}s`,
-                    animationPlayState: reducedMotion ? 'paused' : 'running',
+                    gap,
+                    maxWidth: sideColumns * sideLayout.cardWidth + (sideColumns - 1) * gap,
+                    // Every card reads off these, so the whole wall shares one type size.
+                    ['--live-text' as string]: `${sideLayout.messagePx}px`,
+                    ['--live-meta' as string]: `${sideLayout.metaPx}px`,
+                    ['--live-photo' as string]: `${sideLayout.photoPx}px`,
                   }}
                 >
-                  <WishCard
-                    wish={wish}
-                    variant="live"
-                    photoStyle={layout.photoStyle}
-                    className={arrivals.some((a) => a.id === wish.id) ? 'just-arrived' : undefined}
-                  />
+                  {rotation.slots.map((id, index) => {
+                    const wish = byId.get(id);
+                    if (!wish) return null;
+                    const hasPhoto = Boolean(wish.selfieUrl);
+                    const reserved = visibleWishDecorations(wish).length ? DECORATION_LINES : 0;
+                    const lines = Math.max(
+                      1,
+                      (hasPhoto ? sideLayout.linesWithPhoto : sideLayout.lines) - reserved,
+                    );
+                    return (
+                      // The tile is keyed by position, the card by wish: a
+                      // change of wish fades the new card in without moving
+                      // any of the others.
+                      <div
+                        key={`slot-${index}`}
+                        style={{
+                          width: sideLayout.cardWidth,
+                          height: sideLayout.cardHeight,
+                          ['--live-lines' as string]: String(lines),
+                        }}
+                      >
+                        <WishCard
+                          key={wish.id}
+                          wish={wish}
+                          variant="live"
+                          photoStyle={sideLayout.photoStyle}
+                          messageText={truncateMessage(
+                            wish.message,
+                            messageBudgetFor(sideLayout, hasPhoto, padding, reserved),
+                          )}
+                          className="live-tile-in"
+                          style={{ ['--tile-delay' as string]: `${Math.min(index, 8) * 90}ms` }}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
-        )}
-
-        {wishes.length === 0 && (
-          <div className="flex h-full items-center justify-center">
-            <p className="font-display text-[length:clamp(1.1rem,2vw,2.6rem)] text-[var(--ink-soft)]">
-              The first wish will appear here ✨
-            </p>
-          </div>
-        )}
+              </div>
+            )
+          )}
         </div>
-      </div>
-
-      {/* ------------------------------------------------------------ arrivals */}
-      {arrivals.length > 0 && (
-        <div className="reveal pointer-events-none absolute inset-x-0 bottom-[7vh] z-40 flex justify-center px-[3vw]">
-          <p className="rounded-full bg-white/85 px-5 py-2.5 font-display text-[length:clamp(0.9rem,1.5vw,2rem)] text-[var(--ink)] shadow-lg backdrop-blur">
-            💌 New {arrivals.length === 1 ? 'wish' : 'wishes'} from{' '}
-            {arrivals.map((wish) => wish.name ?? 'a guest').join(', ')}
-          </p>
-        </div>
-      )}
+      </main>
 
       {/* ------------------------------------------------------------ footer */}
-      <footer className="relative z-30 flex shrink-0 items-center justify-between px-[3vw] py-[1.4vh]">
-        <p className="flex items-center gap-2 text-[0.95vw] uppercase tracking-[0.24em] text-[var(--ink-soft)]/80">
-          <BrandGlyph size={16} className="opacity-70" />
-          A Laya &amp; Bee experience
-        </p>
-        <p className="text-[0.9vw] text-[var(--ink-soft)]/70">
-          {offline ? 'Reconnecting…' : `Updating every ${refreshSeconds}s`}
-        </p>
+      <footer
+        className="relative z-30 flex shrink-0 items-center justify-center gap-[0.8em] pt-[clamp(0.5rem,1.5vh,1.25rem)] font-body uppercase tracking-[0.26em] text-[var(--ink-soft)]/75"
+        style={{ fontSize: 'clamp(0.62rem, min(0.7vw, 1.25vh), 0.95rem)' }}
+      >
+        <BrandGlyph size={14} className="opacity-70" />A Laya &amp; Bee experience
       </footer>
 
-      {/*
-        * No vignette any more. It existed to fade cards that were being clipped
-        * by the top and bottom edges; the board now fits inside its safe area,
-        * so the only thing a vignette did was dim the first and last rows.
-        */}
+      {/* ------------------------------------------------------------ setup */}
+      {pointerActive && !showDebug && (
+        <p className="reveal pointer-events-none fixed bottom-3 right-4 z-50 rounded-full bg-[var(--ink)]/80 px-3.5 py-1.5 font-body text-[12px] tracking-wide text-white">
+          F fullscreen · Q QR code · D details · → next wish
+        </p>
+      )}
+
+      {showDebug && (
+        <div className="pointer-events-none fixed bottom-3 left-3 z-50 rounded-lg bg-black/75 px-3 py-2 font-mono text-[12px] leading-5 text-white">
+          <p>
+            wishes {wishes.length} · rotating {rotation.pool.length}/{displayLimit} · wall{' '}
+            {rotation.slots.length}/{rotation.capacity}
+          </p>
+          <p>
+            spotlight {spotlight ? rotation.pool.indexOf(spotlight) + 1 : 0}/{rotation.pool.length} · size{' '}
+            {spotlight ? spotlightTier(spotlight.message, Boolean(spotlight.selfieUrl)) : '-'} · {dwell / 1000}s
+            {justArrived ? ' · new' : ''}
+          </p>
+          <p>
+            wall {sideColumns}×{Math.ceil(rotation.slots.length / Math.max(1, sideColumns))} · card{' '}
+            {sideLayout.cardWidth}×{sideLayout.cardHeight} · {sideLayout.messagePx}px (min{' '}
+            {sideFloor(side.viewportHeight)}) · {sideLayout.photoStyle}
+          </p>
+          <p>
+            poll {refreshSeconds}s · {offline ? 'OFFLINE' : 'online'} · last{' '}
+            {lastSync ? new Date(lastSync).toLocaleTimeString() : 'not yet'}
+          </p>
+          <p>
+            screen {side.viewportWidth}×{side.viewportHeight} @{side.dpr}x · qr {qrMode} · motion{' '}
+            {reducedMotion ? 'reduced' : 'on'}
+          </p>
+          <p className="text-white/60">F fullscreen · Q QR code · D details · → next wish</p>
+        </div>
+      )}
     </div>
   );
 }

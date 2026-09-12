@@ -9,7 +9,14 @@ import {
   type CreateEventInput,
   type UpdateEventInput,
 } from '@/lib/data/events';
-import { createPreloadedWish, deleteWish, removeSelfie, updateWish } from '@/lib/data/wishes';
+import {
+  createPreloadedWish,
+  deleteWish,
+  deleteWishes,
+  removeSelfie,
+  updateWish,
+  updateWishes,
+} from '@/lib/data/wishes';
 import { createAsset, deleteAsset, updateAsset } from '@/lib/data/assets';
 import { ensureBookToken, revokeBookToken } from '@/lib/data/book';
 import {
@@ -116,6 +123,29 @@ export async function updateWishAction(
 export async function deleteWishAction(eventId: string, wishId: string): Promise<ActionResult> {
   return guard(async () => {
     await deleteWish(wishId);
+    refreshEvent(eventId);
+    return undefined;
+  });
+}
+
+export async function bulkUpdateWishesAction(
+  eventId: string,
+  wishIds: string[],
+  input: unknown,
+): Promise<ActionResult> {
+  return guard(async () => {
+    const parsed = wishPatchSchema.safeParse(input);
+    if (!parsed.success) throw new Error(firstIssue(parsed.error));
+
+    await updateWishes(wishIds, parsed.data);
+    refreshEvent(eventId);
+    return undefined;
+  });
+}
+
+export async function bulkDeleteWishesAction(eventId: string, wishIds: string[]): Promise<ActionResult> {
+  return guard(async () => {
+    await deleteWishes(wishIds);
     refreshEvent(eventId);
     return undefined;
   });

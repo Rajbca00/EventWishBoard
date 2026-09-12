@@ -114,6 +114,19 @@ export const Cupcake = memo(function Cupcake({ className, style, size = 40 }: Pi
   );
 });
 
+export const Brownie = memo(function Brownie({ className, style, size = 38 }: PieceProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 42 38" fill="none" className={className} style={style} aria-hidden>
+      <path d="M8 12.5C8 9.4 10.4 7 13.5 7H28.5C31.6 7 34 9.4 34 12.5V25c0 5.2-4.3 9.5-9.5 9.5H19.5C14.3 34.5 10 30.2 10 25V12.5Z" fill="#8a5635" />
+      <path d="M10 18h22M12 13.5h18M15 25h12M17 31h8" stroke="#b7774e" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+      <path d="M14 9.5c1.6-1.7 3.5-2.6 5.5-2.6 2.4 0 4.5 1 6.1 3.1" stroke="#c6855d" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="16" cy="17.5" r="2.2" fill="#d39a5d" />
+      <circle cx="25" cy="22" r="2.2" fill="#d39a5d" />
+      <circle cx="21" cy="15" r="2" fill="#d39a5d" />
+    </svg>
+  );
+});
+
 export const Gift = memo(function Gift({ className, style, color = '#e3a3b6', size = 36 }: PieceProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 36 36" fill="none" className={className} style={style} aria-hidden>
@@ -225,6 +238,8 @@ export const DECOR_COMPONENTS = {
   ring: Ring,
   star: Star,
   cake: Cupcake,
+  cupcake: Cupcake,
+  brownie: Brownie,
   donut: Donut,
   macaron: Macaron,
   cookie: Cookie,

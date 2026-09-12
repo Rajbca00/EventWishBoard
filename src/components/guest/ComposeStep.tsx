@@ -147,7 +147,7 @@ export default function ComposeStep({
             {remaining <= 40 && (
               <span
                 className="text-[0.72rem] font-medium"
-                style={{ color: remaining <= 0 ? 'var(--accent-2)' : 'var(--ink-soft)' }}
+                style={{ color: remaining <= 0 ? 'var(--notice, var(--accent-2))' : 'var(--ink-soft)' }}
               >
                 {remaining <= 0 ? 'Character limit reached' : `${remaining} left`}
               </span>
@@ -215,7 +215,7 @@ export default function ComposeStep({
                     <motion.span
                       layoutId="asset-tab"
                       className="absolute inset-0 -z-10 rounded-full"
-                      style={{ background: 'linear-gradient(135deg,var(--accent),var(--accent-2))' }}
+                      style={{ background: 'linear-gradient(135deg,var(--accent-fill,var(--accent)),var(--accent-2))' }}
                       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
                     />
                   )}
@@ -226,7 +226,7 @@ export default function ComposeStep({
                       style={
                         tab === entry.id
                           ? { background: 'rgba(255,255,255,0.3)', color: 'white' }
-                          : { background: 'var(--accent)', color: 'white' }
+                          : { background: 'var(--accent-fill, var(--accent))', color: 'white' }
                       }
                     >
                       {chosenFor(entry.id).length}
@@ -289,7 +289,7 @@ export default function ComposeStep({
                         // The number is the order it will appear in on the card.
                         <span
                           className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full text-[0.6rem] font-bold text-white"
-                          style={{ background: 'var(--accent)' }}
+                          style={{ background: 'var(--accent-fill, var(--accent))' }}
                           aria-hidden
                         >
                           {activeChosen.indexOf(value as string) + 1}
