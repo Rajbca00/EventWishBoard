@@ -31,6 +31,24 @@ export const SUPABASE_SECRET_KEY =
 /** Salts the IP hashes used for rate limiting so they are not reversible. */
 export const IP_SALT = process.env.IP_HASH_SALT ?? 'laya-bee-wish-wall';
 
+/** Reads an on/off environment flag: "1", "true", "yes" or "on", in any case. */
+export function flagEnabled(value: string | undefined): boolean {
+  return ['1', 'true', 'yes', 'on'].includes((value ?? '').trim().toLowerCase());
+}
+
+/**
+ * DISABLE_WISH_RATE_LIMIT=1 switches off the per-IP limits on guest wishes, so
+ * a developer can send dozens from one machine while testing.
+ *
+ * Server-only, and read on every call rather than once at startup, so it can
+ * be flipped without a rebuild locally. The organiser dashboard shows a banner
+ * for as long as it is on: left on at a real event, it would let one phone
+ * flood the wall.
+ */
+export function isRateLimitDisabled(): boolean {
+  return flagEnabled(process.env.DISABLE_WISH_RATE_LIMIT);
+}
+
 /**
  * Copying .env.example without editing it is an easy step to miss, and the
  * resulting failure is opaque: the placeholder hostname does not resolve, so
@@ -80,6 +98,9 @@ export const BRAND = {
   tagline: 'Homemade treats for happier moments.',
   promise: 'Good treats, brighter people.',
   instagram: 'https://www.instagram.com/layanbee_cakes/',
+  /** As Laya & Bee write it; Instagram handles are not case-sensitive. */
+  instagramHandle: 'layaNbee_cakes',
+  phone: '8438186676',
   review: 'https://www.google.com/search?q=laya+and+bee',
   enquiry: 'https://www.instagram.com/layanbee_cakes/',
 } as const;

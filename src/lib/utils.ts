@@ -141,3 +141,16 @@ export function seededRandom(seed: string): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/**
+ * A mobile number grouped for reading at a glance: "84381 86676" rather than
+ * ten digits in a row. Only numbers shaped like an Indian mobile (ten digits
+ * starting 6-9, after an optional +91) are regrouped; a landline such as
+ * "0422 123 456" keeps the grouping it was written with.
+ */
+export function formatPhone(value: string): string {
+  const digits = value.replace(/[^\d+]/g, '');
+  const match = /^(\+91)?([6-9]\d{4})(\d{5})$/.exec(digits);
+  if (!match) return value.trim();
+  return [match[1], match[2], match[3]].filter(Boolean).join(' ');
+}
