@@ -15,12 +15,12 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    'text-white shadow-[0_16px_32px_-16px_var(--accent-2)] bg-[linear-gradient(135deg,var(--accent),var(--accent-2))] hover:brightness-[1.06] active:brightness-95',
+    'text-white shadow-[0_16px_32px_-16px_var(--accent-2)] bg-[linear-gradient(135deg,var(--accent-fill,var(--accent)),var(--accent-2))] hover:brightness-[1.06] active:brightness-95',
   secondary:
-    'glass text-[var(--ink)] hover:bg-white/85 active:bg-white/95',
+    'glass text-[var(--ink)] hover:bg-[var(--tint-strong)] active:bg-[var(--tint-strong)]',
   outline:
-    'border border-[var(--card-line)] bg-white/55 text-[var(--ink)] hover:bg-white/80',
-  ghost: 'text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-white/50',
+    'border border-[var(--card-line)] bg-[var(--tint)] text-[var(--ink)] hover:bg-[var(--tint-strong)]',
+  ghost: 'text-[var(--ink-soft)] hover:text-[var(--ink)] hover:bg-[var(--tint)]',
 };
 
 // Comfortable thumb targets: nothing below 44px tall in the guest flow.

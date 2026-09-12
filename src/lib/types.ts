@@ -1,6 +1,6 @@
 export type WishStatus = 'pending' | 'approved' | 'hidden';
 export type AssetType = 'sticker' | 'gif' | 'meme';
-export type ThemeId = 'wedding' | 'birthday' | 'engagement' | 'celebration';
+export type ThemeId = 'wedding' | 'birthday' | 'engagement' | 'celebration' | 'chocolate';
 export type EventStatus = 'open' | 'closed' | 'full';
 
 /** Feature flags stored on `events.settings`. */
@@ -13,6 +13,8 @@ export interface EventSettings {
   charLimit: number;
   /** 0 means unlimited. */
   maxWishes: number;
+  /** How many of the newest wishes are shown on the live wall at once. */
+  wallLimit: number;
   useDefaultAssets: boolean;
   showInstagram: boolean;
   showReview: boolean;
@@ -25,6 +27,7 @@ export const DEFAULT_SETTINGS: EventSettings = {
   moderation: 'auto',
   charLimit: 300,
   maxWishes: 0,
+  wallLimit: 16,
   useDefaultAssets: true,
   showInstagram: true,
   showReview: true,

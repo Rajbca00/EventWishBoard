@@ -234,7 +234,6 @@ export default function GuestExperience({ payload }: { payload: GuestPayload }) 
         <ClosedScreen
           theme={theme}
           event={event}
-          wall={payload.wall}
           reason={event.status === 'full' ? 'full' : 'closed'}
         />
       </div>

@@ -1,3 +1,5 @@
+import { clamp } from '@/lib/utils';
+
 /**
  * Working out how to lay the venue board out.
  *
@@ -11,7 +13,7 @@
  */
 
 /** How many of the most recent wishes the board shows at once. */
-export const BOARD_LIMIT = 15;
+export const BOARD_LIMIT = 16;
 
 export interface BoardSpace {
   /** Usable width in px, with the side margins already removed. */
@@ -64,7 +66,7 @@ const LINE_HEIGHT = 1.45;
 
 /* The author line, measured in units of the message's own font size, so the
  * type can be solved for without knowing it first. */
-const META_RATIO = 0.62;
+const META_RATIO = 0.7;
 const AUTHOR_ROW = META_RATIO * 1.8;
 
 /** Padding scales with the card, so a small card does not lose most of itself to it. */
@@ -201,6 +203,89 @@ export function fitBoard({ width, height, count, gap = 24 }: BoardSpace): BoardL
     // An avatar sits on the author line, so it costs the message nothing.
     linesWithPhoto: banner ? linesBesideBanner : lines,
   };
+}
+
+export function messageScaleFor(message: string, availableChars = 28): number {
+  const clean = message.trim();
+  if (!clean) return 1;
+
+  const ratio = availableChars / Math.max(clean.length, 1);
+  return clamp(Number((Math.min(1, ratio) * 1.08).toFixed(3)), 0.46, 1);
+}
+
+/**
+ * Shortens a wish to fit, at a word boundary, with a real ellipsis.
+ *
+ * Cutting mid-word ("congratulat…") reads as a glitch on a screen people are
+ * standing in front of. The cut backs up to the last space, unless that would
+ * throw away most of the text — a single enormous word still gets cut.
+ */
+export function truncateMessage(message: string, maxChars = 140): string {
+  const clean = message.trim();
+  if (!clean) return '';
+  if (clean.length <= maxChars) return clean;
+
+  const hard = clean.slice(0, Math.max(1, maxChars - 1));
+  const lastSpace = hard.lastIndexOf(' ');
+  const cut = lastSpace >= hard.length * 0.6 ? hard.slice(0, lastSpace) : hard;
+  return `${cut.replace(/[\s,;:.–—-]+$/u, '')}…`;
+}
+
+/**
+ * How many characters of a wish a side-wall card can show before it should be
+ * shortened, given the layout the board chose.
+ *
+ * Worked out from the card rather than from how many cards there are, so the
+ * cut lands where the text actually runs out of room.
+ */
+export function messageBudgetFor(
+  layout: Pick<BoardLayout, 'cardWidth' | 'messagePx' | 'lines' | 'linesWithPhoto'>,
+  hasPhoto: boolean,
+  paddingPx: number,
+  /** Lines given over to something else in the card, such as its decorations. */
+  reservedLines = 0,
+): number {
+  const inner = Math.max(0, layout.cardWidth - paddingPx * 2);
+  const perLine = inner / Math.max(1, layout.messagePx * AVERAGE_GLYPH);
+  const lines = Math.max(1, (hasPhoto ? layout.linesWithPhoto : layout.lines) - reservedLines);
+  // A little under the full box: words do not pack a line perfectly.
+  return Math.max(24, Math.floor(perLine * lines * 0.88));
+}
+
+/**
+ * How many side-wall cards fit while every one stays readable.
+ *
+ * `floorPx` is the smallest message type allowed. Cards are sized as though
+ * there were at least `minCells` of them, so two early wishes do not balloon
+ * into giant cards beside the spotlight and then shrink as more arrive.
+ */
+export function readableCapacity({
+  width,
+  height,
+  floorPx,
+  max = 12,
+  minCells = 4,
+  gap = 24,
+}: {
+  width: number;
+  height: number;
+  floorPx: number;
+  max?: number;
+  minCells?: number;
+  gap?: number;
+}): number {
+  if (width <= 0 || height <= 0) return 0;
+
+  for (let count = max; count >= 1; count--) {
+    const layout = fitBoard({ width, height, count: Math.max(count, minCells), gap });
+    if (layout.messagePx >= floorPx) return count;
+  }
+  // A small screen that cannot hold even the minimum at the floor: take the
+  // fewest cards it can show at all rather than none.
+  for (let count = Math.min(max, minCells - 1); count >= 1; count--) {
+    if (fitBoard({ width, height, count, gap }).messagePx >= floorPx) return count;
+  }
+  return 1;
 }
 
 /**

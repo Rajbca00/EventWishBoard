@@ -44,21 +44,27 @@
 
 :root {
   /* Overwritten per event by ThemeProvider; these keep non-event pages sane. */
-  --bg-1: #fff7f3;
-  --bg-2: #ffe9ef;
-  --bg-3: #f4e7ff;
-  --ink: #4a2c33;
-  --ink-soft: #85676e;
-  --accent: #d4738f;
-  --accent-2: #b8577a;
-  --accent-soft: #ffd9e4;
-  --gold: #d8a657;
-  --card: rgb(255 252 248 / 0.80);
-  --card-solid: #fffcf8;
-  --card-line: rgb(168 116 128 / 0.20);
-  --wall-1: #fce3ec;
-  --wall-2: #e8dcff;
-  --wall-3: #fff2e4;
+  --bg-1: #f9f1df;
+  --bg-2: #f3e4d1;
+  --bg-3: #f8efe5;
+  --ink: #3f220f;
+  --ink-soft: #7e5c46;
+  --accent: #ba5d5d;
+  --accent-2: #8d4327;
+  --accent-soft: #f6e2cb;
+  --gold: #d7a14a;
+  --card: rgb(255 250 244 / 0.82);
+  --card-solid: #fffdf9;
+  --card-line: rgb(106 68 40 / 0.18);
+  --wall-1: #f6ebdd;
+  --wall-2: #f3e2d5;
+  --wall-3: #f9f2e5;
+  /* The translucent wash used for chips, hovers and selected states. Light
+     themes wash with white; the dark theme overrides these with cream at a
+     low alpha, where white would glare. */
+  --tint: rgb(255 255 255 / 0.58);
+  --tint-strong: rgb(255 255 255 / 0.85);
+  --sweep: rgb(255 255 255 / 0.55);
 
   color-scheme: light;
 }
@@ -385,7 +391,7 @@ button,
 .low-power .glass {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  background: rgb(255 255 255 / 0.9);
+  background: var(--card-solid);
 }
 
 /* --------------------------------------------------------------- live wall
@@ -517,6 +523,124 @@ button,
 
 .just-arrived {
   animation: arrive-glow 2.4s ease-out 3;
+}
+
+/* --------------------------------------------------------------- reception display
+   The /live screen: a spotlight wish beside a wall of recent ones, filling a
+   16:9 monitor edge to edge. Motion here is limited to opacity and to the
+   background; the wish text never moves once it has arrived, because moving
+   text on an ordinary 1x monitor is rasterised on its own layer and looks
+   soft from a few feet away. */
+
+.live-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* Portrait screens and narrow windows stack the wall under the spotlight. */
+@media (max-aspect-ratio: 5/4), (max-width: 900px) {
+  .live-stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1.3fr) minmax(0, 1fr);
+  }
+}
+
+@keyframes live-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes live-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes live-tile-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.9rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes live-halo {
+  0%,
+  100% {
+    opacity: 0.26;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* The incoming wish waits for the outgoing one to be mostly gone, so the two
+   are never legible on top of each other. */
+.live-spot-in {
+  animation: live-fade-in 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.45s both;
+}
+
+.live-spot-out {
+  animation: live-fade-out 0.7s ease-in both;
+  pointer-events: none;
+}
+
+.live-tile-in {
+  animation: live-tile-in 1s cubic-bezier(0.22, 1, 0.36, 1) var(--tile-delay, 0s) both;
+}
+
+.live-halo {
+  animation: live-halo 10s ease-in-out infinite;
+}
+
+/* Same reasoning as `.force-motion .wander` above: literal !important values
+   and custom properties survive the global reduced-motion reset. */
+.force-motion .live-spot-in {
+  animation-duration: 1.1s !important;
+  animation-delay: 0.45s !important;
+  animation-iteration-count: 1 !important;
+}
+
+.force-motion .live-spot-out {
+  animation-duration: 0.7s !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+}
+
+.force-motion .live-tile-in {
+  animation-duration: 1s !important;
+  animation-delay: var(--tile-delay, 0s) !important;
+  animation-iteration-count: 1 !important;
+}
+
+.force-motion .live-halo {
+  animation-duration: 10s !important;
+  animation-iteration-count: infinite !important;
+}
+
+/* The background ambience, which the reset would otherwise freeze. */
+.force-motion .animate-lift,
+.force-motion .animate-tumble {
+  animation-duration: var(--decor-duration, 14s) !important;
+  animation-delay: var(--decor-delay, 0s) !important;
+  animation-iteration-count: infinite !important;
+}
+
+.force-motion .animate-twinkle {
+  animation-duration: 3.2s !important;
+  animation-delay: var(--twinkle-delay, 0s) !important;
+  animation-iteration-count: infinite !important;
 }
 
 /* --------------------------------------------------------------- print

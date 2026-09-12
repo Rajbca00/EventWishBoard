@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Noto_Color_Emoji } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import LiveWall from '@/components/wall/LiveWall';
 import { getEvent } from '@/lib/data/events';
@@ -6,9 +7,24 @@ import { getWallWishes } from '@/lib/data/wishes';
 import { resolveTheme, themeStyle } from '@/lib/themes';
 import { siteUrl } from '@/lib/env';
 
+/*
+ * A colour emoji font for the venue screen only. Guests' phones have current
+ * emoji; the laptop or mini-PC driving a reception monitor often does not, and
+ * Windows 10 draws anything newer than 2020 (🫶, 🥹) as an empty box. Google
+ * serves it split by unicode range, so the screen downloads only the slices
+ * holding emoji it actually shows — hence no preload, which would fetch them all.
+ */
+const emoji = Noto_Color_Emoji({
+  weight: '400',
+  subsets: ['emoji'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-noto-emoji',
+});
+
 interface PageProps {
   params: Promise<{ eventId: string }>;
-  searchParams: Promise<{ refresh?: string; motion?: string }>;
+  searchParams: Promise<{ refresh?: string; motion?: string; qr?: string; debug?: string }>;
 }
 
 // A venue screen must always show the current wall, never a cached one.
@@ -25,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function LiveWallPage({ params, searchParams }: PageProps) {
   const { eventId } = await params;
-  const { refresh, motion } = await searchParams;
+  const { refresh, motion, qr, debug } = await searchParams;
 
   const event = await getEvent(eventId);
   if (!event) notFound();
@@ -36,16 +52,23 @@ export default async function LiveWallPage({ params, searchParams }: PageProps) 
   // ?refresh=15 tunes polling; ?motion=off stills the board.
   const seconds = Math.min(Math.max(Number(refresh) || 30, 10), 300);
 
+  // ?qr=small or ?qr=off for venues that already have a code on the table;
+  // ?debug=1 shows counts, timings and layout while the screen is set up.
+  const qrMode = qr === 'off' || qr === 'hidden' ? 'hidden' : qr === 'small' ? 'compact' : 'full';
+
   return (
-    <div style={themeStyle(theme)}>
+    <div className={emoji.variable} style={themeStyle(theme)}>
       <LiveWall
         theme={theme}
         eventId={event.id}
         hosts={event.hosts || event.name}
         guestUrl={`${siteUrl()}/event/${event.id}`}
         initialWishes={wishes}
+        displayLimit={event.settings.wallLimit}
         refreshSeconds={seconds}
         forceMotion={motion !== 'off'}
+        qrMode={qrMode}
+        debug={debug === '1' || debug === 'true'}
       />
     </div>
   );

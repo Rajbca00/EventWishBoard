@@ -389,6 +389,33 @@ export async function updateWish(
   return data ? shapeAdminWish(data) : null;
 }
 
+export async function updateWishes(
+  wishIds: string[],
+  patch: { status?: WishStatus; featured?: boolean; message?: string },
+): Promise<AdminWish[]> {
+  if (wishIds.length === 0) return [];
+  const update: Record<string, unknown> = {};
+  if (patch.status !== undefined) update.status = patch.status;
+  if (patch.featured !== undefined) update.is_featured = patch.featured;
+  if (patch.message !== undefined) update.message = sanitizeText(patch.message, LIMITS.wishChars);
+  if (!Object.keys(update).length) return [];
+
+  if (demo()) {
+    const rows = demoData().wishes.filter((wish) => wishIds.includes(wish.id));
+    rows.forEach((row) => Object.assign(row, update));
+    return rows.map((row) => shapeAdminWish(row, row.selfie_path));
+  }
+
+  const { data, error } = await supabaseAdmin()
+    .from('wishes')
+    .update(update)
+    .in('id', wishIds)
+    .select('*');
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => shapeAdminWish(row as WishRow, null));
+}
+
 export async function deleteWish(wishId: string): Promise<void> {
   if (demo()) {
     const store = demoData();
@@ -405,6 +432,31 @@ export async function deleteWish(wishId: string): Promise<void> {
   if (data?.selfie_path) await deleteSelfie(data.selfie_path);
 
   const { error } = await supabaseAdmin().from('wishes').delete().eq('id', wishId);
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteWishes(wishIds: string[]): Promise<void> {
+  if (wishIds.length === 0) return;
+
+  if (demo()) {
+    const store = demoData();
+    store.wishes = store.wishes.filter((wish) => !wishIds.includes(wish.id));
+    return;
+  }
+
+  const { data, error: selectError } = await supabaseAdmin()
+    .from('wishes')
+    .select('id, selfie_path')
+    .in('id', wishIds);
+
+  if (selectError) throw new Error(selectError.message);
+
+  const selfiePaths = (data ?? []).map((row) => row.selfie_path).filter(Boolean) as string[];
+  for (const path of selfiePaths) {
+    await deleteSelfie(path);
+  }
+
+  const { error } = await supabaseAdmin().from('wishes').delete().in('id', wishIds);
   if (error) throw new Error(error.message);
 }
 

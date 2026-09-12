@@ -42,6 +42,7 @@ export default function EventForm({ event }: Props) {
     moderation: event?.settings.moderation ?? ('auto' as 'auto' | 'manual'),
     charLimit: event?.settings.charLimit ?? 300,
     maxWishes: event?.settings.maxWishes ?? 0,
+    wallLimit: event?.settings.wallLimit ?? 16,
   });
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
@@ -214,7 +215,7 @@ export default function EventForm({ event }: Props) {
           />
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <Field label="Moderation">
             <select
               className={inputClass}
@@ -234,6 +235,20 @@ export default function EventForm({ event }: Props) {
               className={inputClass}
               value={settings.charLimit}
               onChange={(e) => setSetting('charLimit', Number(e.target.value))}
+            />
+          </Field>
+
+          <Field
+            label="Latest on wall"
+            hint="How many of the newest wishes appear on the live wall."
+          >
+            <input
+              type="number"
+              min={1}
+              max={100}
+              className={inputClass}
+              value={settings.wallLimit}
+              onChange={(e) => setSetting('wallLimit', Number(e.target.value))}
             />
           </Field>
 

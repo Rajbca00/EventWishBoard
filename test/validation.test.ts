@@ -186,6 +186,7 @@ describe('event settings', () => {
     moderation: 'auto' as const,
     charLimit: 300,
     maxWishes: 0,
+    wallLimit: 16,
     useDefaultAssets: true,
     showInstagram: true,
     showReview: true,
@@ -203,5 +204,27 @@ describe('event settings', () => {
 
   it('refuse an unknown moderation mode', () => {
     expect(eventSettingsSchema.safeParse({ ...base, moderation: 'whenever' }).success).toBe(false);
+  });
+});
+
+describe('event themes', () => {
+  it('accept the dark chocolate theme', async () => {
+    const { createEventSchema } = await import('@/lib/validation');
+    expect(createEventSchema.parse({ name: 'Reception', theme: 'chocolate' }).theme).toBe('chocolate');
+  });
+
+  it('refuse a theme that does not exist', async () => {
+    const { createEventSchema } = await import('@/lib/validation');
+    expect(createEventSchema.safeParse({ name: 'Reception', theme: 'neon' }).success).toBe(false);
+  });
+
+  it('refuse a wall limit outside 1 to 100', () => {
+    const settings = {
+      selfieEnabled: true, wallEnabled: true, publicSelfies: false, moderation: 'auto' as const,
+      charLimit: 300, maxWishes: 0, useDefaultAssets: true, showInstagram: true, showReview: true,
+    };
+    expect(eventSettingsSchema.safeParse({ ...settings, wallLimit: 0 }).success).toBe(false);
+    expect(eventSettingsSchema.safeParse({ ...settings, wallLimit: 101 }).success).toBe(false);
+    expect(eventSettingsSchema.safeParse({ ...settings, wallLimit: 16 }).success).toBe(true);
   });
 });

@@ -94,7 +94,7 @@ export default async function EventOverviewPage({ params }: PageProps) {
             title="Recent wishes"
             action={
               <LinkButton href={`/admin/events/${event.id}/wishes`} variant="ghost">
-                View all
+                Review &amp; moderate all
               </LinkButton>
             }
           >

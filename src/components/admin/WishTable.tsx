@@ -2,10 +2,15 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
-import { Check, EyeOff, Star, Trash2, Clock } from 'lucide-react';
+import { useMemo, useState, useTransition } from 'react';
+import { Check, EyeOff, Star, Trash2, Clock, Square, SquareCheckBig, SquareMinus } from 'lucide-react';
 import { Badge } from './ui';
-import { deleteWishAction, updateWishAction } from '@/app/admin/actions';
+import {
+  bulkDeleteWishesAction,
+  bulkUpdateWishesAction,
+  deleteWishAction,
+  updateWishAction,
+} from '@/app/admin/actions';
 import { formatDateTime, cn } from '@/lib/utils';
 import type { AdminWish, WishStatus } from '@/lib/types';
 
@@ -27,8 +32,21 @@ export default function WishTable({ eventId, wishes }: Props) {
   const [filter, setFilter] = useState<WishStatus | 'all'>('all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
+  /** The row last ticked, so shift-click can select everything between. */
+  const [anchor, setAnchor] = useState<number | null>(null);
 
   const visible = filter === 'all' ? wishes : wishes.filter((wish) => wish.status === filter);
+  const visibleIds = useMemo(() => visible.map((wish) => wish.id), [visible]);
+
+  /*
+   * Bulk actions only ever touch what is on screen. A selection made under one
+   * filter must not be deleted by someone looking at another, where those
+   * wishes are no longer visible to check.
+   */
+  const chosen = useMemo(() => visibleIds.filter((id) => selected.includes(id)), [visibleIds, selected]);
+  const allChosen = visibleIds.length > 0 && chosen.length === visibleIds.length;
+  const bulkBusy = pending && busyId === '__bulk__';
 
   const run = (wishId: string, action: () => Promise<{ ok: boolean; error?: string }>) => {
     setBusyId(wishId);
@@ -52,6 +70,74 @@ export default function WishTable({ eventId, wishes }: Props) {
     run(wish.id, () => deleteWishAction(eventId, wish.id));
   };
 
+  const clearSelection = () => {
+    setSelected([]);
+    setAnchor(null);
+  };
+
+  const changeFilter = (next: WishStatus | 'all') => {
+    setFilter(next);
+    clearSelection();
+  };
+
+  /** Ticks one row; with shift held, everything between it and the last one ticked. */
+  const toggleRow = (index: number, range: boolean) => {
+    const id = visibleIds[index];
+    if (!id) return;
+    setSelected((current) => {
+      if (range && anchor !== null && anchor !== index) {
+        const [from, to] = anchor < index ? [anchor, index] : [index, anchor];
+        const adding = !current.includes(id);
+        const next = new Set(current);
+        visibleIds.slice(from, to + 1).forEach((spanId) => (adding ? next.add(spanId) : next.delete(spanId)));
+        return [...next];
+      }
+      return current.includes(id) ? current.filter((value) => value !== id) : [...current, id];
+    });
+    setAnchor(index);
+  };
+
+  const toggleAll = () => {
+    setSelected(allChosen ? [] : visibleIds);
+    setAnchor(null);
+  };
+
+  /*
+   * Approve, hold and hide are one click each — they are all reversible, and
+   * moderating forty wishes should not mean forty confirmation dialogs. Only
+   * delete asks first, because it cannot be undone.
+   */
+  const applyBulk = (action: 'approve' | 'pending' | 'hide' | 'delete') => {
+    const ids = chosen;
+    if (!ids.length) return;
+
+    if (action === 'delete') {
+      const noun = `wish${ids.length === 1 ? '' : 'es'}`;
+      if (!window.confirm(`Delete ${ids.length} ${noun} permanently? Any photos attached are deleted too. This cannot be undone.`)) {
+        return;
+      }
+    }
+
+    setError(null);
+    setBusyId('__bulk__');
+    startTransition(async () => {
+      const result =
+        action === 'delete'
+          ? await bulkDeleteWishesAction(eventId, ids)
+          : await bulkUpdateWishesAction(eventId, ids, {
+              status: action === 'approve' ? 'approved' : action === 'hide' ? 'hidden' : 'pending',
+            });
+
+      setBusyId(null);
+      if (!result.ok) {
+        setError(result.error ?? 'That change did not save');
+        return;
+      }
+      clearSelection();
+      router.refresh();
+    });
+  };
+
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2 border-b border-[var(--card-line)] px-5 py-3">
@@ -64,7 +150,7 @@ export default function WishTable({ eventId, wishes }: Props) {
             <button
               key={entry.id}
               type="button"
-              onClick={() => setFilter(entry.id)}
+              onClick={() => changeFilter(entry.id)}
               className={cn(
                 'rounded-full px-3.5 py-1.5 text-[0.8rem] font-medium transition-colors',
                 filter === entry.id
@@ -86,6 +172,62 @@ export default function WishTable({ eventId, wishes }: Props) {
         </a>
       </div>
 
+      {/* The selection bar is always there, so the multi-select is found
+          without having to guess that ticking a row reveals it. */}
+      <div
+        className={cn(
+          'sticky top-0 z-10 flex min-h-12 flex-wrap items-center gap-2 border-b border-[var(--card-line)] px-5 py-2 transition-colors',
+          chosen.length ? 'bg-[var(--accent-soft)]' : 'bg-cocoa-50/70',
+        )}
+      >
+        <button
+          type="button"
+          onClick={toggleAll}
+          disabled={!visibleIds.length || bulkBusy}
+          aria-label={allChosen ? 'Clear selection' : `Select all ${visibleIds.length} wishes`}
+          className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-[0.82rem] font-medium text-[var(--ink)] hover:bg-white/70 disabled:opacity-40"
+        >
+          {allChosen ? (
+            <SquareCheckBig className="size-[1.1rem] text-[var(--accent-2)]" />
+          ) : chosen.length ? (
+            <SquareMinus className="size-[1.1rem] text-[var(--accent-2)]" />
+          ) : (
+            <Square className="size-[1.1rem]" />
+          )}
+          {chosen.length ? `${chosen.length} selected` : `Select all ${visibleIds.length}`}
+        </button>
+
+        {chosen.length > 0 ? (
+          <>
+            <span className="mx-1 h-5 w-px bg-[var(--card-line)]" aria-hidden />
+            <BulkButton label={`Approve ${chosen.length} selected wish${chosen.length === 1 ? '' : 'es'}`} onClick={() => applyBulk('approve')} disabled={bulkBusy} icon={<Check className="size-4" />}>
+              Approve
+            </BulkButton>
+            <BulkButton label={`Hold ${chosen.length} selected wish${chosen.length === 1 ? '' : 'es'}`} onClick={() => applyBulk('pending')} disabled={bulkBusy} icon={<Clock className="size-4" />}>
+              Hold for review
+            </BulkButton>
+            <BulkButton label={`Hide ${chosen.length} selected wish${chosen.length === 1 ? '' : 'es'}`} onClick={() => applyBulk('hide')} disabled={bulkBusy} icon={<EyeOff className="size-4" />}>
+              Hide
+            </BulkButton>
+            <BulkButton label={`Delete ${chosen.length} selected wish${chosen.length === 1 ? '' : 'es'}`} onClick={() => applyBulk('delete')} disabled={bulkBusy} danger icon={<Trash2 className="size-4" />}>
+              Delete
+            </BulkButton>
+            <button
+              type="button"
+              onClick={clearSelection}
+              disabled={bulkBusy}
+              className="ml-auto text-[0.78rem] text-[var(--ink-soft)] underline underline-offset-2 hover:text-[var(--ink)]"
+            >
+              Clear
+            </button>
+          </>
+        ) : (
+          <span className="text-[0.76rem] text-[var(--ink-soft)]">
+            Tick wishes to approve, hold, hide or delete several at once · shift-click selects a range
+          </span>
+        )}
+      </div>
+
       {error && (
         <p className="bg-red-50 px-5 py-2.5 text-[0.84rem] text-red-700" role="alert">
           {error}
@@ -98,19 +240,36 @@ export default function WishTable({ eventId, wishes }: Props) {
         </p>
       ) : (
         <ul className="divide-y divide-[var(--card-line)]">
-          {visible.map((wish) => {
+          {visible.map((wish, index) => {
             const media = [...wish.gifs, ...wish.memes];
             const emoji = wish.stickers.find((value) => !value.startsWith('/'));
-            const isBusy = pending && busyId === wish.id;
+            const isChosen = chosen.includes(wish.id);
+            const isBusy = (pending && busyId === wish.id) || (bulkBusy && isChosen);
 
             return (
               <li
                 key={wish.id}
                 className={cn(
-                  'flex flex-wrap items-start gap-3 px-5 py-4 transition-opacity',
+                  'flex flex-wrap items-start gap-3 px-5 py-4 transition-[opacity,background-color]',
+                  isChosen && 'bg-[var(--accent-soft)]/45',
                   isBusy && 'opacity-50',
                 )}
               >
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={isChosen}
+                  aria-label={isChosen ? 'Unselect wish' : 'Select wish'}
+                  onClick={(event) => toggleRow(index, event.shiftKey)}
+                  className="-ml-1 mt-1.5 shrink-0 rounded-md p-1 text-[var(--ink-soft)] hover:bg-cocoa-50 hover:text-[var(--ink)]"
+                >
+                  {isChosen ? (
+                    <SquareCheckBig className="size-5 text-[var(--accent-2)]" />
+                  ) : (
+                    <Square className="size-5" />
+                  )}
+                </button>
+
                 {wish.selfieUrl ? (
                   // Signed Supabase URL — a plain img avoids re-signing through the optimiser.
                   // eslint-disable-next-line @next/next/no-img-element
@@ -197,6 +356,42 @@ export default function WishTable({ eventId, wishes }: Props) {
         </ul>
       )}
     </div>
+  );
+}
+
+function BulkButton({
+  children,
+  icon,
+  onClick,
+  disabled,
+  danger,
+  label,
+}: {
+  children: React.ReactNode;
+  icon: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+  /** The full name, e.g. "Delete 3 selected wishes" — the rows have their own Delete. */
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8rem] font-medium transition-colors disabled:opacity-50',
+        danger
+          ? 'border-red-200 bg-white text-red-600 hover:bg-red-50'
+          : 'border-[var(--card-line)] bg-white text-[var(--ink)] hover:bg-cocoa-50',
+      )}
+    >
+      {icon}
+      {children}
+    </button>
   );
 }
 

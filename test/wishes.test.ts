@@ -1,5 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getWallWishes, submitGuestWish, SubmissionError, exportWishesCsv } from '@/lib/data/wishes';
+import { visibleWishDecorations } from '@/components/wall/WishCard';
+import {
+  getWallWishes,
+  submitGuestWish,
+  SubmissionError,
+  exportWishesCsv,
+  updateWishes,
+  deleteWishes,
+} from '@/lib/data/wishes';
 import { getEvent } from '@/lib/data/events';
 import { demoData } from '@/lib/demo/store';
 import { LIMITS } from '@/lib/env';
@@ -34,6 +42,19 @@ const submit = (over: Partial<WishSubmissionInput> = {}) =>
     } as WishSubmissionInput,
     'test-ip-hash',
   );
+
+describe('wish card decoration cap', () => {
+  it('keeps a wish card to the first two decorations across emojis, gifs and memes', () => {
+    const decorations = visibleWishDecorations({
+      stickers: ['🎉', '💖', '✨'],
+      gifs: ['/library/gifs/balloons.svg', '/library/gifs/hearts.svg'],
+      memes: ['/library/memes/finally.svg'],
+    });
+
+    expect(decorations).toEqual(['/library/gifs/balloons.svg', '/library/gifs/hearts.svg']);
+    expect(decorations.length).toBeLessThanOrEqual(2);
+  });
+});
 
 describe('submitting a wish', () => {
   it('returns the wish, approved, when moderation is automatic', async () => {
@@ -197,6 +218,38 @@ describe('the wall a guest sees', () => {
       expect(wish).not.toHaveProperty('sticker');
       expect(wish).not.toHaveProperty('gif');
     }
+  });
+});
+
+describe('bulk admin actions', () => {
+  it('approves multiple wishes at once', async () => {
+    const a = await submit({ message: 'first approved' });
+    const b = await submit({ message: 'second approved' });
+
+    const updated = await updateWishes([a.wish.id, b.wish.id], { status: 'approved' });
+
+    expect(updated).toHaveLength(2);
+    expect(updated.every((wish) => wish.status === 'approved')).toBe(true);
+  });
+
+  it('hides multiple wishes at once', async () => {
+    const a = await submit({ message: 'first hidden' });
+    const b = await submit({ message: 'second hidden' });
+
+    const updated = await updateWishes([a.wish.id, b.wish.id], { status: 'hidden' });
+
+    expect(updated).toHaveLength(2);
+    expect(updated.every((wish) => wish.status === 'hidden')).toBe(true);
+  });
+
+  it('deletes multiple wishes at once', async () => {
+    const a = await submit({ message: 'delete one' });
+    const b = await submit({ message: 'delete two' });
+
+    await deleteWishes([a.wish.id, b.wish.id]);
+
+    expect(demoData().wishes.some((wish) => wish.id === a.wish.id)).toBe(false);
+    expect(demoData().wishes.some((wish) => wish.id === b.wish.id)).toBe(false);
   });
 });
 

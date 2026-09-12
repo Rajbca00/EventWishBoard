@@ -36,7 +36,7 @@ function PromoLink({ href, icon, label, tone = 'plain' }: LinkProps) {
       ].join(' ')}
       style={
         tone === 'accent'
-          ? { background: 'linear-gradient(135deg,var(--accent),var(--accent-2))' }
+          ? { background: 'linear-gradient(135deg,var(--accent-fill,var(--accent)),var(--accent-2))' }
           : undefined
       }
     >

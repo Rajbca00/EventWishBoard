@@ -42,7 +42,7 @@ export default function StepShell({
           <button
             type="button"
             onClick={onBack}
-            className="-ml-2 flex size-11 items-center justify-center rounded-full text-[var(--ink-soft)] transition-colors hover:bg-white/50 hover:text-[var(--ink)]"
+            className="-ml-2 flex size-11 items-center justify-center rounded-full text-[var(--ink-soft)] transition-colors hover:bg-[var(--tint)] hover:text-[var(--ink)]"
             aria-label="Go back"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>

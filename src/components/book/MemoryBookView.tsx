@@ -82,7 +82,7 @@ export default function MemoryBookView({ book }: { book: MemoryBook }) {
             {wishes.map((wish, index) => (
               <li
                 key={wish.id}
-                className="book-entry rounded-[1.5rem] border border-[var(--card-line)] bg-white/70 p-6 shadow-[0_16px_40px_-32px_rgb(74_44_51/0.55)] sm:p-8"
+                className="book-entry rounded-[1.5rem] border border-[var(--card-line)] bg-[var(--card)] p-6 shadow-[0_16px_40px_-32px_rgb(74_44_51/0.55)] sm:p-8"
               >
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                   {wish.selfieUrl && (
