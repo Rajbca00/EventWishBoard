@@ -7,6 +7,7 @@ import { formatDate, daysUntil, relativeTime } from '@/lib/utils';
 import { THEMES } from '@/lib/themes';
 import { Badge, EmptyState, LinkButton, PageHeader, Panel, StatCard } from '@/components/admin/ui';
 import QrPanel from '@/components/admin/QrPanel';
+import LiveQrToggle from '@/components/admin/LiveQrToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,9 +145,12 @@ export default async function EventOverviewPage({ params }: PageProps) {
                 {`${url}/live`}
               </p>
               <p className="text-[0.8rem] leading-relaxed text-[var(--ink-soft)]">
-                Wishes drift continuously and the board checks for new ones every 30
-                seconds. Add <code>?refresh=15</code> to check more often.
+                One wish at a time in a spotlight beside the latest ones, checking for new
+                wishes every 30 seconds. Press F on the screen for fullscreen.
               </p>
+              <div className="mt-4 border-t border-[var(--card-line)] pt-4">
+                <LiveQrToggle eventId={event.id} initial={event.settings.liveQr} />
+              </div>
             </div>
           </Panel>
 

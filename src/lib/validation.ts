@@ -93,6 +93,9 @@ export const seedBatchSchema = z.object({
   wishes: z.array(seedWishSchema).min(1).max(10),
 });
 
+/** Where the live wall's QR code sits: large, small, or hidden. */
+export const liveQrSchema = z.enum(['full', 'compact', 'hidden']);
+
 export const eventSettingsSchema = z.object({
   selfieEnabled: z.boolean(),
   wallEnabled: z.boolean(),
@@ -101,10 +104,13 @@ export const eventSettingsSchema = z.object({
   charLimit: z.number().int().min(50).max(LIMITS.wishChars),
   maxWishes: z.number().int().min(0).max(100_000),
   wallLimit: z.number().int().min(1).max(100),
+  liveQr: liveQrSchema,
   useDefaultAssets: z.boolean(),
   showInstagram: z.boolean(),
   showReview: z.boolean(),
 });
+
+export const themeIdSchema = z.enum(['wedding', 'birthday', 'engagement', 'celebration', 'chocolate']);
 
 export const createEventSchema = z.object({
   name: z.string().trim().min(1, 'Give the event a name').max(120),
@@ -113,14 +119,27 @@ export const createEventSchema = z.object({
   eventDate: z.string().trim().max(40).nullable().optional(),
   expiryDate: z.string().trim().max(40).nullable().optional(),
   description: z.string().trim().max(600).optional().default(''),
-  theme: z.enum(['wedding', 'birthday', 'engagement', 'celebration', 'chocolate']).optional().default('wedding'),
+  theme: themeIdSchema.optional().default('wedding'),
   welcomeMessage: z.string().trim().max(300).optional().default(''),
   logoUrl: z.string().max(500).nullable().optional(),
   background: z.string().max(500).nullable().optional(),
   settings: eventSettingsSchema.partial().optional(),
 });
 
+/**
+ * An update carries only the fields it was given.
+ *
+ * `createEventSchema.partial()` alone is not enough: Zod 4 applies a field's
+ * default even inside `.optional()`, so a patch of `{ archived: true }` parsed
+ * into one that also set the hosts, description and welcome message to empty
+ * and the theme back to Wedding — and archiving an event wiped it. The fields
+ * with defaults are restated here without them.
+ */
 export const updateEventSchema = createEventSchema.partial().extend({
+  hosts: z.string().trim().max(120).optional(),
+  description: z.string().trim().max(600).optional(),
+  theme: themeIdSchema.optional(),
+  welcomeMessage: z.string().trim().max(300).optional(),
   archived: z.boolean().optional(),
 });
 

@@ -176,3 +176,11 @@ describe('the guest wish endpoint', () => {
     expect(body).not.toContain('ip_hash');
   });
 });
+
+describe('what the venue screen is told about itself', () => {
+  it('carries the dashboard QR setting with every poll', async () => {
+    const { GET } = await import('@/app/api/events/[eventId]/wishes/route');
+    const body = await (await GET(new Request('http://x/') as never, params(EVENT))).json();
+    expect(body.display).toEqual({ qr: 'full' });
+  });
+});

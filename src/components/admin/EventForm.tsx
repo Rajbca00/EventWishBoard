@@ -43,6 +43,7 @@ export default function EventForm({ event }: Props) {
     charLimit: event?.settings.charLimit ?? 300,
     maxWishes: event?.settings.maxWishes ?? 0,
     wallLimit: event?.settings.wallLimit ?? 16,
+    liveQr: event?.settings.liveQr ?? ('full' as 'full' | 'compact' | 'hidden'),
   });
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
@@ -240,7 +241,7 @@ export default function EventForm({ event }: Props) {
 
           <Field
             label="Latest on wall"
-            hint="How many of the newest wishes appear on the live wall."
+            hint="How many of the newest wishes the live wall rotates through."
           >
             <input
               type="number"
@@ -250,6 +251,21 @@ export default function EventForm({ event }: Props) {
               value={settings.wallLimit}
               onChange={(e) => setSetting('wallLimit', Number(e.target.value))}
             />
+          </Field>
+
+          <Field
+            label="QR code on live wall"
+            hint="Hide it if the table already has a printed code."
+          >
+            <select
+              className={inputClass}
+              value={settings.liveQr}
+              onChange={(e) => setSetting('liveQr', e.target.value as 'full' | 'compact' | 'hidden')}
+            >
+              <option value="full">Large</option>
+              <option value="compact">Small</option>
+              <option value="hidden">Hidden</option>
+            </select>
           </Field>
 
           <Field

@@ -24,6 +24,7 @@ export function parseSettings(raw: unknown): EventSettings {
   merged.charLimit = Math.min(Math.max(Number(merged.charLimit) || 300, 50), LIMITS.wishChars);
   merged.maxWishes = Math.max(Math.floor(Number(merged.maxWishes) || 0), 0);
   merged.wallLimit = Math.min(Math.max(Math.floor(Number(merged.wallLimit) || 16), 1), 100);
+  merged.liveQr = merged.liveQr === 'compact' || merged.liveQr === 'hidden' ? merged.liveQr : 'full';
   merged.moderation = merged.moderation === 'manual' ? 'manual' : 'auto';
 
   const flags = [

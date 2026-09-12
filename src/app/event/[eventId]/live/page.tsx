@@ -52,9 +52,18 @@ export default async function LiveWallPage({ params, searchParams }: PageProps) 
   // ?refresh=15 tunes polling; ?motion=off stills the board.
   const seconds = Math.min(Math.max(Number(refresh) || 30, 10), 300);
 
-  // ?qr=small or ?qr=off for venues that already have a code on the table;
-  // ?debug=1 shows counts, timings and layout while the screen is set up.
-  const qrMode = qr === 'off' || qr === 'hidden' ? 'hidden' : qr === 'small' ? 'compact' : 'full';
+  // The QR code follows the event setting, which the organiser can change from
+  // the dashboard while the screen runs. ?qr=large|small|off pins it for this
+  // one screen instead. ?debug=1 shows counts, timings and layout during setup.
+  const pinnedQr =
+    qr === 'off' || qr === 'hidden'
+      ? 'hidden'
+      : qr === 'small'
+        ? 'compact'
+        : qr === 'large' || qr === 'on'
+          ? 'full'
+          : null;
+  const qrMode = pinnedQr ?? event.settings.liveQr;
 
   return (
     <div className={emoji.variable} style={themeStyle(theme)}>
@@ -68,6 +77,7 @@ export default async function LiveWallPage({ params, searchParams }: PageProps) 
         refreshSeconds={seconds}
         forceMotion={motion !== 'off'}
         qrMode={qrMode}
+        qrPinned={pinnedQr !== null}
         debug={debug === '1' || debug === 'true'}
       />
     </div>
