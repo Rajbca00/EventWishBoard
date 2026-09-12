@@ -8,7 +8,8 @@ import SceneBackground from './SceneBackground';
 import { BrandGlyph } from '@/components/ui/BrandMark';
 import { celebrate } from '@/lib/confetti';
 import { usePrefersReducedMotion } from '@/lib/hooks';
-import { cn } from '@/lib/utils';
+import { cn, formatPhone } from '@/lib/utils';
+import { BRAND } from '@/lib/env';
 import {
   BOARD_LIMIT,
   fitBoard,
@@ -74,6 +75,24 @@ const sideFloor = (viewportHeight: number) => Math.round(Math.min(40, Math.max(1
 const sideGap = (viewportHeight: number) => Math.round(Math.min(36, Math.max(12, viewportHeight * 0.02)));
 /** Matches the live card's `p-[clamp(0.6rem,1vw,1.4rem)]`. */
 const cardPadding = (viewportWidth: number) => Math.min(22.4, Math.max(9.6, viewportWidth * 0.01));
+
+function InstagramGlyph() {
+  return (
+    <svg width="1.05em" height="1.05em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4.2" />
+      <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function PhoneGlyph() {
+  return (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5 3.5h3.2l1.6 4.2-2.1 1.3a11 11 0 0 0 7.3 7.3l1.3-2.1 4.2 1.6V19a1.5 1.5 0 0 1-1.6 1.5A16.5 16.5 0 0 1 3.5 5.1 1.5 1.5 0 0 1 5 3.5Z" />
+    </svg>
+  );
+}
 
 function toggleFullscreen() {
   if (typeof document === 'undefined') return;
@@ -483,11 +502,32 @@ export default function LiveWall({
       </main>
 
       {/* ------------------------------------------------------------ footer */}
+      {/* Laya & Bee's own line. Quiet next to the wishes, but large enough to
+          read and copy down from the dessert table — a guest who loved the
+          cake will want to know where it came from. */}
       <footer
-        className="relative z-30 flex shrink-0 items-center justify-center gap-[0.8em] pt-[clamp(0.5rem,1.5vh,1.25rem)] font-body uppercase tracking-[0.26em] text-[var(--ink-soft)]/75"
-        style={{ fontSize: 'clamp(0.62rem, min(0.7vw, 1.25vh), 0.95rem)' }}
+        className="relative z-30 flex shrink-0 flex-wrap items-center justify-center gap-x-[1.3em] gap-y-1 pt-[clamp(0.5rem,1.5vh,1.25rem)] font-body text-[var(--ink-soft)]"
+        style={{ fontSize: 'clamp(0.78rem, min(0.92vw, 1.65vh), 1.35rem)' }}
       >
-        <BrandGlyph size={14} className="opacity-70" />A Laya &amp; Bee experience
+        <span className="flex items-center gap-[0.6em] uppercase tracking-[0.24em]" style={{ fontSize: '0.74em' }}>
+          <BrandGlyph size={16} className="opacity-80" />A Laya &amp; Bee experience
+        </span>
+        <svg width="0.5em" height="0.5em" viewBox="0 0 10 10" className="text-[var(--gold)]" fill="currentColor" aria-hidden>
+          <path d="M5 0 10 5 5 10 0 5Z" />
+        </svg>
+        <span className="flex items-center gap-[0.45em] font-medium text-[var(--ink)]">
+          <InstagramGlyph />
+          <span>
+            <span className="sr-only">Instagram </span>@{BRAND.instagramHandle}
+          </span>
+        </span>
+        <span className="flex items-center gap-[0.45em] font-medium tabular-nums text-[var(--ink)]">
+          <PhoneGlyph />
+          <span>
+            <span className="sr-only">Phone </span>
+            {formatPhone(BRAND.phone)}
+          </span>
+        </span>
       </footer>
 
       {/* ------------------------------------------------------------ setup */}

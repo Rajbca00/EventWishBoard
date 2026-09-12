@@ -3,7 +3,7 @@ import { supabaseAdmin } from '../supabase/admin';
 import { demoData, demoNewId } from '../demo/store';
 import { deleteSelfie, signSelfies, uploadSelfie } from '../images';
 import { looksLikeSpam, sanitizeText } from '../utils';
-import { isSupabaseConfigured, LIMITS } from '../env';
+import { isRateLimitDisabled, isSupabaseConfigured, LIMITS } from '../env';
 import { canShowPhotoOnWall, isMissingColumn, shapeAdminWish, shapePublicWish } from './shape';
 import { getEventStats, statusFor } from './events';
 import type {
@@ -83,8 +83,18 @@ export async function getWallWishes(
 
 /* ------------------------------------------------------------------ guest submission */
 
+/** So the log says it once per server, not once per wish. */
+let warnedRateLimitOff = false;
+
 async function assertNotRateLimited(eventId: string, ipHash: string) {
   if (demo()) return;
+  if (isRateLimitDisabled()) {
+    if (!warnedRateLimitOff) {
+      console.warn('[wish] DISABLE_WISH_RATE_LIMIT is on — guest wishes are not rate limited. Turn it off before a real event.');
+      warnedRateLimitOff = true;
+    }
+    return;
+  }
 
   const since = new Date(Date.now() - LIMITS.wishWindowMs).toISOString();
 

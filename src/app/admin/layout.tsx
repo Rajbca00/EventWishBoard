@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import Sidebar from '@/components/admin/Sidebar';
 import DemoBanner from '@/components/DemoBanner';
+import RateLimitBanner from '@/components/admin/RateLimitBanner';
 import { currentAdmin } from '@/lib/admin-auth';
 import { getEvent } from '@/lib/data/events';
 
@@ -45,6 +46,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="px-5 pt-5 lg:px-8">
           <DemoBanner />
+          <RateLimitBanner />
         </div>
         <main className="min-w-0 flex-1 px-5 py-6 lg:px-8 lg:py-8">{children}</main>
       </div>
