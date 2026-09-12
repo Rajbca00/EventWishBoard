@@ -44,3 +44,5 @@ next-env.d.ts
 
 .vercel
 .env*
+# The template holds only placeholders and the setup notes; share it.
+!.env.example
