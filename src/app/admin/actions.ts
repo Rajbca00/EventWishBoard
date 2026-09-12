@@ -27,6 +27,7 @@ import {
   preloadedWishSchema,
   updateEventSchema,
   wishPatchSchema,
+  liveQrSchema,
 } from '@/lib/validation';
 
 export interface ActionResult<T = undefined> {
@@ -78,6 +79,23 @@ export async function updateEventAction(eventId: string, input: unknown): Promis
     if (!parsed.success) throw new Error(firstIssue(parsed.error));
 
     await updateEvent(eventId, parsed.data as UpdateEventInput);
+    refreshEvent(eventId);
+    return undefined;
+  });
+}
+
+/**
+ * Shows, shrinks or hides the QR code on the live wall.
+ *
+ * Its own action so the dashboard switch can change this one setting and
+ * nothing else, validated against exactly the three values it may take.
+ */
+export async function setLiveQrAction(eventId: string, mode: unknown): Promise<ActionResult> {
+  return guard(async () => {
+    const parsed = liveQrSchema.safeParse(mode);
+    if (!parsed.success) throw new Error('Choose large, small or hidden');
+
+    await updateEvent(eventId, { settings: { liveQr: parsed.data } } as UpdateEventInput);
     refreshEvent(eventId);
     return undefined;
   });

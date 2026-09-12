@@ -1,6 +1,9 @@
 export type WishStatus = 'pending' | 'approved' | 'hidden';
 export type AssetType = 'sticker' | 'gif' | 'meme';
 export type ThemeId = 'wedding' | 'birthday' | 'engagement' | 'celebration' | 'chocolate';
+
+/** The QR code on the live wall: large, small, or hidden when the venue prints its own. */
+export type LiveQrMode = 'full' | 'compact' | 'hidden';
 export type EventStatus = 'open' | 'closed' | 'full';
 
 /** Feature flags stored on `events.settings`. */
@@ -15,6 +18,8 @@ export interface EventSettings {
   maxWishes: number;
   /** How many of the newest wishes are shown on the live wall at once. */
   wallLimit: number;
+  /** Changeable while the screen runs: it picks the change up on its next poll. */
+  liveQr: LiveQrMode;
   useDefaultAssets: boolean;
   showInstagram: boolean;
   showReview: boolean;
@@ -28,6 +33,7 @@ export const DEFAULT_SETTINGS: EventSettings = {
   charLimit: 300,
   maxWishes: 0,
   wallLimit: 16,
+  liveQr: 'full',
   useDefaultAssets: true,
   showInstagram: true,
   showReview: true,

@@ -41,6 +41,8 @@ interface Props {
   forceMotion?: boolean;
   /** ?qr=small shrinks the code; ?qr=off hides it when the table has its own. */
   qrMode?: QrMode;
+  /** The URL chose the QR mode, so the dashboard setting does not move it. */
+  qrPinned?: boolean;
   /** ?debug=1 shows counts, timings and layout for setting the screen up. */
   debug?: boolean;
 }
@@ -127,6 +129,7 @@ export default function LiveWall({
   refreshSeconds = 30,
   forceMotion = true,
   qrMode: initialQrMode = 'full',
+  qrPinned = false,
   debug = false,
 }: Props) {
   const prefersReduced = usePrefersReducedMotion();
@@ -145,6 +148,8 @@ export default function LiveWall({
   const [pointerActive, setPointerActive] = useState(false);
 
   const seen = useRef(new Set(initialWishes.map((wish) => wish.id)));
+  /** The dashboard's QR setting as last seen: only a change to it moves the screen. */
+  const serverQr = useRef<QrMode>(initialQrMode);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sideRef = useRef<HTMLDivElement | null>(null);
 
@@ -176,9 +181,21 @@ export default function LiveWall({
         setOffline(true);
         return;
       }
-      const data = (await response.json()) as { wall: PublicWish[] };
+      const data = (await response.json()) as { wall: PublicWish[]; display?: { qr?: string } };
       setOffline(false);
       setLastSync(Date.now());
+
+      // The organiser changed the QR setting in the dashboard. A Q press on the
+      // screen in the meantime holds until the setting changes again.
+      const nextQr = data.display?.qr;
+      if (
+        !qrPinned &&
+        (nextQr === 'full' || nextQr === 'compact' || nextQr === 'hidden') &&
+        nextQr !== serverQr.current
+      ) {
+        serverQr.current = nextQr;
+        setQrMode(nextQr);
+      }
 
       const fresh = data.wall.filter((wish) => !seen.current.has(wish.id));
       data.wall.forEach((wish) => seen.current.add(wish.id));
@@ -192,7 +209,7 @@ export default function LiveWall({
       // A venue's wifi will drop. Keep showing what we have and try again.
       setOffline(true);
     }
-  }, [eventId, theme.confetti, displayLimit]);
+  }, [eventId, theme.confetti, displayLimit, qrPinned]);
 
   useEffect(() => {
     const timer = window.setInterval(refresh, refreshSeconds * 1000);

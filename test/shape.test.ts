@@ -177,3 +177,18 @@ describe('whether a photo may appear on the public wall', () => {
     expect(canShowPhotoOnWall({ publicSelfies: false }, { ...photo, selfie_public: false })).toBe(false);
   });
 });
+
+describe('the live wall QR setting as stored', () => {
+  it('defaults to a large code', () => {
+    expect(parseSettings({}).liveQr).toBe('full');
+  });
+
+  it('keeps small and hidden', () => {
+    expect(parseSettings({ liveQr: 'compact' }).liveQr).toBe('compact');
+    expect(parseSettings({ liveQr: 'hidden' }).liveQr).toBe('hidden');
+  });
+
+  it('treats anything unexpected as large rather than hiding the code by accident', () => {
+    expect(parseSettings({ liveQr: 'off' as never }).liveQr).toBe('full');
+  });
+});

@@ -17,9 +17,12 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
   const { eventId } = await params;
   const event = await getEvent(eventId);
   if (!event) return jsonError('Event not found', 404);
-  if (!event.settings.wallEnabled) return jsonOk({ wall: [] });
+  // How the venue screen should present itself, so a change made in the
+  // dashboard reaches it on its next poll without anyone touching the screen.
+  const display = { qr: event.settings.liveQr };
+  if (!event.settings.wallEnabled) return jsonOk({ wall: [], display });
 
-  return jsonOk({ wall: await getWallWishes(event) });
+  return jsonOk({ wall: await getWallWishes(event), display });
 }
 
 /**

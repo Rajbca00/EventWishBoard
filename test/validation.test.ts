@@ -187,6 +187,7 @@ describe('event settings', () => {
     charLimit: 300,
     maxWishes: 0,
     wallLimit: 16,
+    liveQr: 'full' as const,
     useDefaultAssets: true,
     showInstagram: true,
     showReview: true,
@@ -222,9 +223,49 @@ describe('event themes', () => {
     const settings = {
       selfieEnabled: true, wallEnabled: true, publicSelfies: false, moderation: 'auto' as const,
       charLimit: 300, maxWishes: 0, useDefaultAssets: true, showInstagram: true, showReview: true,
+      liveQr: 'full' as const,
     };
     expect(eventSettingsSchema.safeParse({ ...settings, wallLimit: 0 }).success).toBe(false);
     expect(eventSettingsSchema.safeParse({ ...settings, wallLimit: 101 }).success).toBe(false);
     expect(eventSettingsSchema.safeParse({ ...settings, wallLimit: 16 }).success).toBe(true);
+  });
+});
+
+describe('the live wall QR setting', () => {
+  it('accepts large, small and hidden', async () => {
+    const { liveQrSchema } = await import('@/lib/validation');
+    for (const mode of ['full', 'compact', 'hidden']) expect(liveQrSchema.safeParse(mode).success).toBe(true);
+  });
+
+  it('refuses anything else', async () => {
+    const { liveQrSchema } = await import('@/lib/validation');
+    for (const mode of ['off', '', 'HIDDEN', null]) expect(liveQrSchema.safeParse(mode).success).toBe(false);
+  });
+});
+
+/*
+ * Archiving an event sends { archived: true } and nothing else. Zod 4 applies
+ * defaults inside .optional(), so the update schema once turned that into a
+ * patch that also emptied the hosts and welcome message and reset the theme.
+ */
+describe('an event update', () => {
+  it('carries only the fields it was given', async () => {
+    const { updateEventSchema } = await import('@/lib/validation');
+    expect(Object.keys(updateEventSchema.parse({ archived: true }))).toEqual(['archived']);
+    expect(Object.keys(updateEventSchema.parse({ settings: { liveQr: 'hidden' } }))).toEqual(['settings']);
+  });
+
+  it('still validates the fields it is given', async () => {
+    const { updateEventSchema } = await import('@/lib/validation');
+    expect(updateEventSchema.safeParse({ theme: 'neon' }).success).toBe(false);
+    expect(updateEventSchema.safeParse({ hosts: 'x'.repeat(121) }).success).toBe(false);
+    expect(updateEventSchema.parse({ theme: 'chocolate' }).theme).toBe('chocolate');
+  });
+
+  it('still fills in defaults when an event is created', async () => {
+    const { createEventSchema } = await import('@/lib/validation');
+    const created = createEventSchema.parse({ name: 'Reception' });
+    expect(created.theme).toBe('wedding');
+    expect(created.hosts).toBe('');
   });
 });
